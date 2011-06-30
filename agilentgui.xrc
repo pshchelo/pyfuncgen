@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource version="2.3.0.1">
+  <object class="wxFrame" name="AgilentFrame">
+    <object class="wxBoxSizer">
+      <orient>wxHORIZONTAL</orient>
+      <object class="sizeritem">
+        <option>1</option>
+        <flag>wxEXPAND</flag>
+        <object class="wxPanel" name="mainpanel">
+          <style>wxTAB_TRAVERSAL</style>
+          <object class="wxBoxSizer">
+            <orient>wxVERTICAL</orient>
+            <object class="sizeritem">
+              <flag>wxEXPAND</flag>
+              <object class="wxBoxSizer">
+                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <flag>wxALIGN_CENTER_HORIZONTAL</flag>
+                  <object class="wxStaticText" name="device_choice_lbl">
+                    <style>wxALIGN_CENTRE</style>
+                    <label>device:</label>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxComboBox" name="device_cmbox"/>
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxToggleButton" name="connectbtn">
+                    <handler event="EVT_TOGGLEBUTTON">OnToggleConnect</handler>
+                    <label>connect</label>
+                  </object>
+                </object>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <option>1</option>
+              <flag>wxEXPAND</flag>
+              <object class="wxGrid" name="protocol_grd">
+                <size>630, 210</size>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <flag>wxEXPAND</flag>
+              <object class="wxBoxSizer">
+                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
+                  <object class="wxButton" name="wxID_ADD">
+                    <handler event="EVT_BUTTON">OnAddRow</handler>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
+                  <object class="wxButton" name="wxID_OPEN">
+                    <handler event="EVT_BUTTON">OnOpenFile</handler>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
+                  <object class="wxButton" name="wxID_SAVE">
+                    <handler event="EVT_BUTTON">OnSaveFile</handler>
+                  </object>
+                </object>
+              </object>
+            </object>
+            <object class="sizeritem">
+              <flag>wxEXPAND</flag>
+              <object class="wxBoxSizer">
+                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <object class="wxButton" name="startBtn">
+                    <label>Start</label>
+                  </object>
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxButton" name="wxID_ABORT"/>
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
+                </object>
+              </object>
+            </object>
+          </object>
+        </object>
+      </object>
+    </object>
+    <size>700, 340</size>
+  </object>
+</resource>
