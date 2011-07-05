@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 import wx
 from wx import xrc
 import wx.grid #for wxGrid to be loaded from XRC
 
-import pyagilent
+## from visa import instrument, get_instrument_list
+
+## import pyagilent
 
 PROTOCOLCOLS = ['Stage',
                 't, min', 
@@ -14,8 +17,8 @@ PROTOCOLCOLS = ['Stage',
                 'end f, Hz', 
                 'No of steps']
 
-DEVICENAMES = ['UsbDevice1', 'UsbDevice2']
-
+DEVICENAMES = pyagilent.get_devices()
+    
 class AgilentApp(wx.App):
     """GUI to control Agilent Function Generator"""
     def OnInit(self):
@@ -66,14 +69,19 @@ class AgilentApp(wx.App):
         
     def OnToggleConnect(self, evt):
         """Handler for Connect/Dicsonnect device button."""
+        evt.Skip()
         devicename = self.deviceChoice.GetValue()
         if self.connectBtn.GetValue():# button was pressed
-            pyagilent.connect(devicename)
-            self.connectBtn.SetLabel('disconnect')
+            self.device = pyagilent.connect(devicename)
+            if self.device:
+                self.device.write("*RST")
+                self.connectBtn.SetLabel('disconnect')
+            else:
+                self.OnError('Can not connect to device %s'%devicename)
+                self.ConnectBtn.SetValue(0)
         else: #button was depressed
-            pyagilent.disconnect(devicename)
+            pyagilent.disconnect(self.device)
             self.connectBtn.SetLabel('connect')
-        evt.Skip()
     
     def OnAddRow(self, evt):
         """Handler for Add Row button."""
