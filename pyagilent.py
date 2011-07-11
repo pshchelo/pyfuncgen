@@ -20,25 +20,35 @@
 19: fg.write("*RST")
 """
 
-##import visa
+##from visa import get_instruments_list, instrument
+def get_instruments_list():
+    return ['dev1', 'dev2']
+def instrument(name):
+    return DumbDevice(name)
+class DumbDevice(object):
+    def __init__(self, name):
+        self.name = name
+    def write(self, cmd):
+        print '%s - %s'%(self.name, cmd)
+    def close(self):
+        del self
 
 def get_devices():
     try:
-        devlist = visa.get_instruments_list()
-    except VisaIOError:
+        devlist = get_instruments_list()
+    except:
         devlist = []
     return devlist
     
 def connect(devname):
-    print "Connect not implemented. Device supplied: %s"%devname
     try:
-        device = visa.instrument(devname)
+        device = instrument(devname)
+        device.write("*RST")
     except VisaIOError:
         device=None
     return device
     
 def disconnect(device):
-    print "Disconnect not implemented. Device supplied: %s"%device
     device.write("OUTP OFF")
     device.write("DISP:TEXT:CLE")
     device.write("SYST:COMM:RLST LOC")

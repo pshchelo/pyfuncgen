@@ -5,9 +5,7 @@ import wx
 from wx import xrc
 import wx.grid #for wxGrid to be loaded from XRC
 
-## from visa import instrument, get_instrument_list
-
-## import pyagilent
+import pyagilent
 
 PROTOCOLCOLS = ['Stage',
                 't, min', 
@@ -74,7 +72,6 @@ class AgilentApp(wx.App):
         if self.connectBtn.GetValue():# button was pressed
             self.device = pyagilent.connect(devicename)
             if self.device:
-                self.device.write("*RST")
                 self.connectBtn.SetLabel('disconnect')
             else:
                 self.OnError('Can not connect to device %s'%devicename)
