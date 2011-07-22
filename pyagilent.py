@@ -20,18 +20,19 @@
 19: fg.write("*RST")
 """
 from __future__ import division
-##from visa import get_instruments_list, instrument
-def get_instruments_list():
-    return ['dev1', 'dev2']
-def instrument(name):
-    return DumbDevice(name)
-class DumbDevice(object):
-    def __init__(self, name):
-        self.name = name
-    def write(self, cmd):
-        print '%s - %s'%(self.name, cmd)
-    def close(self):
-        del self
+from sys import stdout
+from visa import get_instruments_list, instrument
+#~ def get_instruments_list():
+    #~ return ['dev1', 'dev2']
+#~ def instrument(name):
+    #~ return DumbDevice(name)
+#~ class DumbDevice(object):
+    #~ def __init__(self, name):
+        #~ self.name = name
+    #~ def write(self, cmd):
+        #~ print '%s - %s'%(self.name, cmd)
+    #~ def close(self):
+        #~ del self
 
 def get_devices():
     try:
@@ -61,10 +62,10 @@ def dev_off(device):
         device.write("OUTP OFF")
         
 def set_freq(device, freq):
-    device.write("FREQ %d"%freq)
+    device.write("FREQ %.6f"%freq)
 
 def set_volt(device, volt):
-    device.write("VOLT %d"%volt)
+    device.write("VOLT %.2f"%volt)
 
 def set_display(device, line1, line2=None):
     if line2:
@@ -76,12 +77,14 @@ def update_disp(device, mesg, u, f, t):
     line1 = "%s - %s"%(mesg, T)
     line2 = '%.2f Vpp, %.2f Hz'%(u,f)
     set_display(device, line1, line2)
-    print '\n'.join((line1, line2))
     
 def update_finished(device, t):
     T = '%i:%i'%(t//60, t%60)
     set_display(device, 'FINISHED', T)
-    print '\n'.join(('FINISHED', T))
+    
+def update_stdout(line):
+    stdout.write(line)
+    stdout.flush()
     
 def grow_3stages():
     """Grow vesicles in 3 stages"""
@@ -139,7 +142,8 @@ def grow_3stages():
     Ngrow = Tgrow*60//Trez
     U = linspace(Ustart, Uend, Ngrow)
     set_freq(dev, Fmain)
-##    dev_on(dev)
+    set_volt(dev, Ustart)
+    dev_on(dev)
     for i, u in enumerate(U):
         time.sleep(Trez)
         set_volt(dev, u)
@@ -161,7 +165,7 @@ def grow_3stages():
     F = linspace(Fmain, Fdetach, Ndetach)
     for i, f in enumerate(F):
         time.sleep(Trez)
-        ser_freq(dev, f)
+        set_freq(dev, f)
         Tremain = Tdetach*60-i*Trez
         update_disp(dev, 'Detaching', Uend, f, Tremain)
     
@@ -172,8 +176,6 @@ def grow_3stages():
         time.sleep(Trez)
         T = time.time()- start
         update_finished(dev, T)
-
-    
 
 if __name__=='__main__':
     grow_3stages()
