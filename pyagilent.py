@@ -20,25 +20,27 @@
 19: fg.write("*RST")
 """
 from __future__ import division
-from sys import stdout
-## from visa import get_instruments_list, instrument
+from sys import stdout, exit
+import argparse
+from time import time, sleep
+from visa import get_instruments_list, instrument
 
 # Dummy substitutes for real pyVISA classes and functions
 # for developing/debugging on platforms without VISA implementation
 # and/or connected devices
-def get_instruments_list():
-    return ['dev1', 'dev2']
+#~ def get_instruments_list():
+    #~ return ['dev1', 'dev2']
 
-def instrument(name):
-    return DummyDevice(name)
+#~ def instrument(name):
+    #~ return DummyDevice(name)
 
-class DummyDevice(object):
-    def __init__(self, name):
-        self.name = name
-    def write(self, cmd):
-        print '%s - %s'%(self.name, cmd)
-    def close(self):
-        del self
+#~ class DummyDevice(object):
+    #~ def __init__(self, name):
+        #~ self.name = name
+    #~ def write(self, cmd):
+        #~ print '%s - %s'%(self.name, cmd)
+    #~ def close(self):
+        #~ del self
 # end of dummy classes and functions         
         
 
@@ -58,11 +60,11 @@ class AgilentFuncGen(object):
         
     def disconnect(self):
         self.out_off()
+        self.reset()
         self.dev.write("DISP:TEXT:CLE")
         self.reset()
-        self.dev.dev.write("SYST:COMM:RLST LOC")
+        self.dev.write("SYST:COMM:RLST LOC")
         self.dev.close()
-        self.__del__()
     
     def out_off(self):
         self.dev.write("OUTP OFF")
@@ -77,12 +79,11 @@ class AgilentFuncGen(object):
         self.dev.write("VOLT %.2f"%u)
     
     def set_display(self, *lines):
-        if len(lines) > 1:
+        if len(lines) == 1:
             text = lines[0]
         else:
             text = '\r'.join(lines)
         self.dev.write("DISP:TEXT '%s'"%text)
-    
     
 def get_devices():
     try:
@@ -91,7 +92,6 @@ def get_devices():
         devlist = []
     return devlist
     
-
 def update_disp(device, mesg, u, f, t):
     if u:
         u = '%.2f'%u
@@ -101,61 +101,50 @@ def update_disp(device, mesg, u, f, t):
         f = '%.2f'%f
     else:
         f = '--'
-    T = '%i:%i'%(t//60, t%60)
+    T = '%i:%02i'%(t//60, t%60)
     line1 = "%s - %s"%(mesg, T)
     line2 = '%s Vpp | %s Hz'%(u,f)
     device.set_display(line1, line2)
     line = line2+' | %s'%T
     update_stdout(line)
     
-## def update_finished(device, t):
-    ## T = '%i:%i'%(t//60, t%60)
-    ## device.set_display('FINISHED', T)
-    
-    
 def update_stdout(line):
-    stdout.write('\r'+line)
+    blank = ' '*40
+    stdout.write('\r%s\r%s'%(blank, line))
     stdout.flush()
     
 def grow_3stages():
     """Grow vesicles in 3 stages"""
-    import argparse
-    import time
-    import sys
-    import pprint
-    from numpy import linspace
-    
     #parsing arguments
-    
     optparser = argparse.ArgumentParser(description=
-    "Grow vesicles in 3 stages.", epilog='Defaults are for high salinity.')
+    "Grow vesicles in 3 stages.", epilog='(Defaults) are for high salinity.')
     optparser.add_argument('-l', '--list', action='store_true', 
         help='Lisl available devices and exit')
     optparser.add_argument('device', choices=get_instruments_list(),
         default=get_instruments_list()[0],
-        help='Device code to connect with', nargs='?')
+        help='Device code to connect with (first found)', nargs='?')
     optparser.add_argument('-u1', type=float, default=0.1,
-        help='Initial voltage, Vpp')
+        help='Initial voltage, Vpp (0.1)')
     optparser.add_argument('-u2', type=float, default=2.5,
-        help='Final voltage, Vpp')
+        help='Final voltage, Vpp (2.5)')
     optparser.add_argument('-f1', type=float, default=500,
-        help='Main frequency, Hz')
+        help='Main frequency, Hz (500)')
     optparser.add_argument('-f2', type=float, default=50,
-        help='Detachment frequency, Hz')
+        help='Detachment frequency, Hz (50)')
     optparser.add_argument('-t1', type=int, default=30,
-        help='Duration of growing stage, min')
+        help='Duration of growing stage, min (30)')
     optparser.add_argument('-t2', type=int, default=60,
-        help='Duration of resting stage, min')
+        help='Duration of resting stage, min (60)')
     optparser.add_argument('-t3', type=int, default=30, 
-        help='Duration of detachment stage, min')
+        help='Duration of detachment stage, min (30)')
     optparser.add_argument('-dt', type=int, default=5, 
-        help='Update interval of values/displays, sec')
+        help='Update interval of values/displays, sec (5)')
     
     args = optparser.parse_args()
     
     if args.list:
-        pprint.pprint(get_instruments_list())
-        sys.exit(0)
+        print get_instruments_list()
+        exit(0)
 
     Ustart = args.u1
     Uend = args.u2
@@ -173,53 +162,54 @@ def grow_3stages():
     
     #growing stage
     stage = 'Growing'
-    print stage
+    print '\n'+stage
     Ngrow = Tgrow*60//Trez
-    U = linspace(Ustart, Uend, Ngrow)
+    StepUgrow = (Uend-Ustart)/Ngrow
+    U = [Ustart+i*StepUgrow for i in range(Ngrow+1)]
     fg.set_freq(Fmain)
     fg.set_volt(Ustart)
     fg.out_on()
     for i, u in enumerate(U):
-        time.sleep(Trez)
         fg.set_volt(u)
         Tremain = Tgrow*60-i*Trez
         update_disp(fg, stage, u, Fmain, Tremain)
+        sleep(Trez)
     
     #resting stage
     stage = 'Resting'
-    print stage
-    fg.set_freq(Fmain)
-    fg.set_volt(Uend)
+    print '\n'+stage
     Nrest = Trest*60//Trez
     for i in range(Nrest):
-        time.sleep(Trez)
         Tremain = Trest*60-i*Trez
         update_disp(fg, stage, Uend, Fmain, Tremain)
+        sleep(Trez)
         
     #detachment stage
     stage = 'Detaching'
-    print stage
-    fg.set_volt(Uend)
+    print '\n'+stage
     Ndetach = Tdetach*60//Trez
-    F = linspace(Fmain, Fdetach, Ndetach)
+    StepFdetach = (Fdetach-Fmain)/Ndetach
+    F = [Fmain+i*StepFdetach for i in range(Ndetach+1)]
     for i, f in enumerate(F):
-        time.sleep(Trez)
         fg.set_freq(f)
         Tremain = Tdetach*60-i*Trez
         update_disp(fg, stage, Uend, f, Tremain)
+        sleep(Trez)
     
     #after-counter
     stage = 'Finished'
-    print stage
+    print '\n'+stage
     fg.out_off()
     print "Hit Ctrl-C to stop"
-    stop = False
-    start = time.time()
-#TODO: allow for interrupt with any key press
-    while not stop:
-        time.sleep(Trez)
-        T = time.time()- start
-        update_disp(fg, stage, None, None, T)
+    start = time()
+#TODO: allow for interrupt with any key press (for now only Ctrl-C works)
+    while True:
+        try:
+            sleep(Trez)
+            T = time()- start
+            update_disp(fg, stage, None, None, T)
+        except KeyboardInterrupt:
+            break
     fg.disconnect()
     
 if __name__=='__main__':
