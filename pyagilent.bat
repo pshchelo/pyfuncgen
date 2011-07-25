@@ -1,0 +1,1 @@
+start cmd /K pyagilent.exe --help

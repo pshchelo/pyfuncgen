@@ -3,6 +3,7 @@ import py2exe
 
 setup(
         console=['pyagilent.py'],
+        data_files = ["pyagilent.bat",],
         options={"py2exe":{
                             "excludes":["pywin", "pywin.debugger", 
                                             "pywin.debugger.dbgcon",

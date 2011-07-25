@@ -23,7 +23,7 @@ from __future__ import division
 from sys import stdout, exit
 import argparse
 from time import time, sleep
-from visa import get_instruments_list, instrument
+from visa import get_instruments_list, instrument, VisaIOError
 
 # Dummy substitutes for real pyVISA classes and functions
 # for developing/debugging on platforms without VISA implementation
@@ -50,7 +50,7 @@ class AgilentFuncGen(object):
         self.connect(devname)
     
     def connect(self, devname):
-        if devname in get_instruments_list():
+        if devname in get_devices():
             self.dev = instrument(devname)
         else:
             self.dev = None
@@ -88,7 +88,7 @@ class AgilentFuncGen(object):
 def get_devices():
     try:
         devlist = get_instruments_list()
-    except:
+    except VisaIOError:
         devlist = []
     return devlist
     
@@ -119,9 +119,13 @@ def grow_3stages():
     optparser = argparse.ArgumentParser(description=
     "Grow vesicles in 3 stages.", epilog='(Defaults) are for high salinity.')
     optparser.add_argument('-l', '--list', action='store_true', 
-        help='Lisl available devices and exit')
-    optparser.add_argument('device', choices=get_instruments_list(),
-        default=get_instruments_list()[0],
+        help='List available devices and exit')
+    if len(get_devices()) == 0:
+        defaultdevice = None
+    else:
+        defaultdevice = get_devices()[0]
+    optparser.add_argument('device', choices=get_devices(),
+        default=defaultdevice,
         help='Device code to connect with (first found)', nargs='?')
     optparser.add_argument('-u1', type=float, default=0.1,
         help='Initial voltage, Vpp (0.1)')
@@ -143,7 +147,7 @@ def grow_3stages():
     args = optparser.parse_args()
     
     if args.list:
-        print get_instruments_list()
+        print get_devices()
         exit(0)
 
     Ustart = args.u1
@@ -158,7 +162,7 @@ def grow_3stages():
     fg = AgilentFuncGen(args.device)
     if not fg.dev:
         print 'could not connect to device'
-        sys.exit(1)
+        exit(0)
     
     #growing stage
     stage = 'Growing'
@@ -202,7 +206,6 @@ def grow_3stages():
     fg.out_off()
     print "Hit Ctrl-C to stop"
     start = time()
-#TODO: allow for interrupt with any key press (for now only Ctrl-C works)
     while True:
         try:
             sleep(Trez)
