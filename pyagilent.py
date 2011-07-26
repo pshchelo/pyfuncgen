@@ -27,6 +27,7 @@ from time import time, sleep
 try:
     from visa import get_instruments_list, instrument, VisaIOError
 except (ImportError, AttributeError):
+    print "Warning! Using dummies instead of real VISA."
     # Dummy substitutes for real pyVISA classes and functions
     # for developing/debugging on platforms without VISA implementation
     # and/or connected devices
