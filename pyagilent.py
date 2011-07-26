@@ -23,26 +23,30 @@ from __future__ import division
 from sys import stdout, exit
 import argparse
 from time import time, sleep
-from visa import get_instruments_list, instrument, VisaIOError
 
-# Dummy substitutes for real pyVISA classes and functions
-# for developing/debugging on platforms without VISA implementation
-# and/or connected devices
-#~ def get_instruments_list():
-    #~ return ['dev1', 'dev2']
+try:
+    from visa import get_instruments_list, instrument, VisaIOError
+except (ImportError, AttributeError):
+    # Dummy substitutes for real pyVISA classes and functions
+    # for developing/debugging on platforms without VISA implementation
+    # and/or connected devices
+    def get_instruments_list():
+        return ['dev1', 'dev2']
 
-#~ def instrument(name):
-    #~ return DummyDevice(name)
+    def instrument(name):
+        return DummyDevice(name)
 
-#~ class DummyDevice(object):
-    #~ def __init__(self, name):
-        #~ self.name = name
-    #~ def write(self, cmd):
-        #~ print '%s - %s'%(self.name, cmd)
-    #~ def close(self):
-        #~ del self
-# end of dummy classes and functions         
-        
+    class DummyDevice(object):
+        def __init__(self, name):
+            self.name = name
+        def write(self, cmd):
+            print '%s - %s'%(self.name, cmd)
+        def close(self):
+            del self
+    
+    class VisaIOError(Exception):
+        pass
+    # end of dummy classes and functions
 
 class AgilentFuncGen(object):
     """Represents a said function generator"""
