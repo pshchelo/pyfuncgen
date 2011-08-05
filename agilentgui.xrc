@@ -15,31 +15,32 @@
               <object class="wxBoxSizer">
                 <orient>wxHORIZONTAL</orient>
                 <object class="sizeritem">
-                  <flag>wxALIGN_CENTER_HORIZONTAL</flag>
-                  <object class="wxStaticText" name="device_choice_lbl">
-                    <style>wxALIGN_CENTRE</style>
-                    <label>device:</label>
+                  <object class="wxButton" name="devListRefreshBtn">
+                    <label>devices</label>
                   </object>
+                  <option>0</option>
+                  <flag>wxALIGN_CENTRE</flag>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxComboBox" name="device_cmbox"/>
+                  <object class="wxChoice" name="deviceChoice">
+                    <size> </size>
+                  </object>
                   <option>1</option>
                   <flag>wxEXPAND</flag>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxToggleButton" name="connectbtn">
-                    <handler event="EVT_TOGGLEBUTTON">OnToggleConnect</handler>
+                  <object class="wxToggleButton" name="connectBtn">
                     <label>connect</label>
                   </object>
                 </object>
               </object>
             </object>
             <object class="sizeritem">
-              <option>1</option>
-              <flag>wxEXPAND</flag>
-              <object class="wxGrid" name="protocol_grd">
+              <object class="wxGrid" name="protocolGrid">
                 <size>630, 210</size>
               </object>
+              <option>1</option>
+              <flag>wxEXPAND</flag>
             </object>
             <object class="sizeritem">
               <flag>wxEXPAND</flag>
@@ -51,6 +52,11 @@
                   <object class="wxButton" name="wxID_ADD">
                     <handler event="EVT_BUTTON">OnAddRow</handler>
                   </object>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxButton" name="wxID_DELETE"/>
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
                 </object>
                 <object class="sizeritem">
                   <option>1</option>
@@ -73,14 +79,9 @@
               <object class="wxBoxSizer">
                 <orient>wxHORIZONTAL</orient>
                 <object class="sizeritem">
-                  <object class="wxButton" name="startBtn">
+                  <object class="wxToggleButton" name="startBtn">
                     <label>Start</label>
                   </object>
-                  <option>1</option>
-                  <flag>wxEXPAND</flag>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxButton" name="wxID_ABORT"/>
                   <option>1</option>
                   <flag>wxEXPAND</flag>
                 </object>
@@ -90,6 +91,6 @@
         </object>
       </object>
     </object>
-    <size>700, 340</size>
+    <title>pyFuncGen</title>
   </object>
 </resource>

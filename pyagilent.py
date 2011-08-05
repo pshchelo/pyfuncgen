@@ -52,11 +52,11 @@ except (ImportError, AttributeError):
 class AgilentFuncGen(object):
     """Represents a said function generator"""
     def __init__(self, devname):
-        self.connect(devname)
+        self.devname = devname
     
-    def connect(self, devname):
-        if devname in get_devices():
-            self.dev = instrument(devname)
+    def connect(self):
+        if self.devname in get_devices():
+            self.dev = instrument(self.devname)
         else:
             self.dev = None
     
@@ -165,8 +165,9 @@ def grow_3stages():
     Trez = args.dt
 
     fg = AgilentFuncGen(args.device)
+    fg.connect()
     if not fg.dev:
-        print 'could not connect to device'
+        print 'could not connect to device %s'%fg.devname
         exit(0)
     
     #growing stage
