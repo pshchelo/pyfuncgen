@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import csv
 import time
 
 import wx
@@ -26,6 +27,7 @@ class AgilentApp(wx.App):
         self.init_frame()
         self.SetTopWindow(self.frame)
         self.frame.Show()
+        self.frame.Bind(wx.EVT_CLOSE, self.OnClose)
         self.fg = pyagilent.AgilentFuncGen(self.deviceChoice.GetStringSelection())
         return True
     
@@ -69,6 +71,12 @@ class AgilentApp(wx.App):
             self.protocolGrid.SetColLabelValue(i, title)
         self.protocolGrid.SetMinSize((630, 210))
     
+    def OnClose(self, evt):
+        #TODO: try to poll the device if it is connected
+        if self.connectBtn.GetValue():
+            self.fg.disconnect()
+        evt.Skip()
+        
     def OnDevListRefresh(self, evt):
         self.init_device_choice()
         evt.Skip()
@@ -95,13 +103,19 @@ class AgilentApp(wx.App):
         evt.Skip()
         
     def OnSaveFile(self, evt):
-        """Saving grid content as CVS."""
-        data = self.table2list_ascolumns()
-        self.OnError('SaveFile not implemented')
+        """Saving grid content as CSV."""
+        filedlg = wx.FileDialog(self.frame, style=wx.FD_SAVE)
+        if filedlg.ShowModal() != wx.ID_OK:
+            filedlg.Destroy()
+            return
+        filename = filedlg.GetFilename()
+        filedlg.Destroy()
+        data = self.get_grid_data()
+        self.write_data(filename, data)
         evt.Skip()
         
     def OnOpenFile(self, evt):
-        """Load grid content from CVS."""
+        """Load grid content from CSV."""
         evt.Skip()
         filedlg = wx.FileDialog(self.frame)
         if filedlg.ShowModal() != wx.ID_OK:
@@ -111,17 +125,18 @@ class AgilentApp(wx.App):
         filedlg.Destroy()
         data = self.read_data(filename)
         self.set_grid_data(data)
-        self.OnError('OpenFile not implemented')
+        self.clean_rows()
         
     def OnToggleStart(self, evt):
         """Start executing protocol from the grid."""
         if self.startBtn.GetValue(): #button was pressed
             self.startBtn.SetLabel('Abort')
+            self.start()
         else:
             self.startBtn.SetLabel('Start')
-        self.OnError('Start is not implemented')
+##        self.OnError('Start is not implemented')
         evt.Skip()
-        
+    
     def OnError(self, mesg):
         if mesg:
             dlg = wx.MessageDialog(self.frame, mesg, 'Error', style=wx.OK|wx.ICON_ERROR)
@@ -131,17 +146,91 @@ class AgilentApp(wx.App):
         self.clean_rows()
         evt.Skip()
         
-    def table2list_ascolumns(self):
+    def start(self):
+        """Perform actual protocol."""
+        #TODO: check for connection, if not - connect
+        data = self.get_grid_data()
+        for row in data:
+            #devise smth smarter here (dict?)
+            stage, T, Ustart, Fstart, Uend, Fend, Nsteps = row
+            dU = (Uend-Ustart)/(Nsteps-1)
+            dF = (Fend-Fstart)/(Nsteps-1)
+            dT = T*60/(Nsteps-1)
+            self.fg.set_freq(Fstart)
+            self.fg.set_volt(Ustart)
+            self.fg.out_on()
+            self.update_display(stage, Ustart, Fstart, T)
+            for i in range(Nsteps):
+                time.sleep(dT)
+                U = Ustart+(i+1)*dU
+                F = Fstart+(i+1)*dF
+                self.fg.set_freq(F)
+                self.fg.set_volt(U)
+                Tremain = T*60-(i+1)*dT
+                self.update_display(stage, U, F, Tremain)
+            time.sleep(dT)
+            
+    def update_display(self, mesg, u, f, t):
+        """Updates display of function generator"""
+        if u:
+            U = '%.2f'%u
+        else:
+            U = '--'
+        if f:
+            F = '%.2f'%f
+        else:
+            F = '--'
+        if t:
+            T = '%i:%02i'%(t//60, t%60)
+        else:
+            T = '--'
+        line1 = "%s - %s"%(mesg, T)
+        line2 = '%s Vpp | %s Hz'%(U,F)
+        self.fg.set_display(line1, line2)
+        
+    def get_grid_data(self):
+        """Returns data from the table as list of rows"""
         self.clean_rows()
         gridtable = self.protocolGrid.GetTable()
         Nrow = gridtable.GetNumberRows()
-        content = []
-        for col in range(len(PROTOCOLCOLS)):
-            column = []
-            for row in range(Nrow):
-                val = gridtable.GetValue(row, col)
-            content.append(column)
-        return content
+        rows = []
+        for row in range(Nrow):
+            line = []
+            for col in range(len(PROTOCOLCOLS)):
+                strval = gridtable.GetValue(row, col)
+                try:
+                    val = PROTOCOLCOLS[col][1](strval)
+                except ValueError:
+                    msg = 'Could not convert item at row %i, col %i to desired type'
+                    self.OnError(msg%(row, col))
+                    return
+                line.append(val)
+            rows.append(line)
+        return rows
+        
+    def set_grid_data(self, data):
+        """Puts the data into the protocol grid."""
+        for rownum, row in enumerate(data):
+            for colnum, value in enumerate(row):
+                self.protocolGrid.SetCellValue(rownum, colnum, value)
+                    
+    def read_data(self, filename):
+        """Reads data from CSV file"""
+        data = []
+        with open(filename, 'rb') as f:
+            reader = csv.reader(f, dialect='excel')
+            for row in reader:
+                if len(row) != len(PROTOCOLCOLS):
+                    self.OnError('Error in file formatting: %s'%filename)
+                    return
+                data.append(row)
+        return data
+    
+    def write_data(self, filename, data):
+        """Writes data to CSV file"""
+        with open(filename, 'wb') as f:
+            writer = csv.writer(f, dialect='excel')
+            writer.writerows(data)
     
     def clean_rows(self):
         """Removes empty rows from the bottom of the grid."""
@@ -156,16 +245,6 @@ class AgilentApp(wx.App):
                 self.protocolGrid.DeleteRows(row)
             else:
                 break
-        
-    def read_data(self, filename):
-        """Reads data from CSV file"""
-        self.OnError("read_data is not implemented")
-        data=None
-        return data
-    
-    def set_grid_data(self, data):
-        """Puts the data into the protocol grid."""
-        self.OnError("set_grid_data is not implemented")
         
 if __name__ == "__main__":
     app = AgilentApp(False)

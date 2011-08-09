@@ -30,7 +30,6 @@ except (ImportError, AttributeError):
     print "Warning! Using dummies instead of real VISA."
     # Dummy substitutes for real pyVISA classes and functions
     # for developing/debugging on platforms without VISA implementation
-    # and/or connected devices
     def get_instruments_list():
         return ['dev1', 'dev2']
 
