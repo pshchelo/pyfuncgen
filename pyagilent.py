@@ -49,6 +49,7 @@ except (ImportError, AttributeError):
     # end of dummy classes and functions
 
 class AgilentFuncGen(object):
+    #TODO: turn those values that can be set and polled for into class properties
     """Represents a said function generator"""
     def __init__(self, devname):
         self.devname = devname
@@ -75,6 +76,9 @@ class AgilentFuncGen(object):
 
     def out_on(self):
         self.dev.write("OUTP ON")
+    # TODO: check how this works
+    def out_poll(self):
+        return self.dev.ask("OUTP?")
         
     def set_freq(self, f):
         self.dev.write("FREQ %.6f"%f)

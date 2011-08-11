@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+#TODO: get more clear idea about timings/steps.
+#total time - should at this moment the final value just be reached
+# and held for some time more? or is it a final point, where all finishes?
+# since I simulate here a continuous linear ramp, probably the second variant
+# is more appropriate
+# N of steps - realy N of steps (transitions) or N of resulting states?
+#TODO: add abort and pause buttons for running protocol
+#TODO: add display of current parameters (frequency and voltage)
+#TODO: add manual controls of the function generator
+# that is some controls to turn output on/off, set Voltage and frequency
+# and report them back
+#TODO: think of something more elegant (generators? threads?) than flattening the array
+# of all states between all stages of protocol
+#TODO:? add scripting so that any command can be sent to the device with
+# pyVISA interface of read, write or ask.
+
 import csv
 import time
 
@@ -28,6 +45,8 @@ class AgilentApp(wx.App):
         self.SetTopWindow(self.frame)
         self.frame.Show()
         self.frame.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.advance, self.timer)
         self.fg = pyagilent.AgilentFuncGen(self.deviceChoice.GetStringSelection())
         return True
     
@@ -131,10 +150,10 @@ class AgilentApp(wx.App):
         """Start executing protocol from the grid."""
         if self.startBtn.GetValue(): #button was pressed
             self.startBtn.SetLabel('Abort')
-            self.start()
+            self.execute()
         else:
             self.startBtn.SetLabel('Start')
-##        self.OnError('Start is not implemented')
+            self.timer.Stop()
         evt.Skip()
     
     def OnError(self, mesg):
@@ -146,30 +165,58 @@ class AgilentApp(wx.App):
         self.clean_rows()
         evt.Skip()
         
-    def start(self):
+    def execute(self):
         """Perform actual protocol."""
         #TODO: check for connection, if not - connect
         data = self.get_grid_data()
+        out = []
         for row in data:
             #devise smth smarter here (dict?)
             stage, T, Ustart, Fstart, Uend, Fend, Nsteps = row
-            dU = (Uend-Ustart)/(Nsteps-1)
-            dF = (Fend-Fstart)/(Nsteps-1)
-            dT = T*60/(Nsteps-1)
-            self.fg.set_freq(Fstart)
-            self.fg.set_volt(Ustart)
-            self.fg.out_on()
-            self.update_display(stage, Ustart, Fstart, T)
-            for i in range(Nsteps):
-                time.sleep(dT)
-                U = Ustart+(i+1)*dU
-                F = Fstart+(i+1)*dF
-                self.fg.set_freq(F)
-                self.fg.set_volt(U)
-                Tremain = T*60-(i+1)*dT
-                self.update_display(stage, U, F, Tremain)
-            time.sleep(dT)
-            
+            if Nsteps < 1:
+                self.OnError('Number of steps is incorrect')
+                return
+            elif Nsteps == 1:
+                if Ustart == Uend and Fstart == Fend:
+                    dU = 0
+                    dF = 0
+                    dT = T*60
+                else:
+                    self.OnError("Number of steps is incorrect")
+                    return
+            dU = (Uend - Ustart) / (Nsteps - 1)
+            dF = (Fend - Fstart) / (Nsteps - 1)
+            dT = T * 60 / (Nsteps - 1)
+            # exploding the (multi)dimensional list of heterogenious 
+            # values into 1-dim list of (similar) states
+            Us = [Ustart + dU*i for i in range(Nsteps)]
+            Fs = [Fstart + dF*i for i in range(Nsteps)]
+            Tremain = [T*60 - dT*i for i in range(Nsteps)]
+            item = zip([stage,]*Nsteps, Us, Fs, Tremain, [dT,]*Nsteps)
+            out.extend(item)
+        self.protocol = iter(out[1:])
+        stage0, U0, F0, Tremain0, dT0 = out[0]
+        self.apply_state(U0, F0)
+        self.fg.out_on()
+        self.update_display(stage0, U0, F0, Tremain0)
+        self.timer.Start(dT0*1000)
+
+    def advance(self, evt):
+        """Perform next step of iteration"""
+        try:
+            stage, U, F, Tremain, dT = self.protocol.next()
+            self.apply_state(U, F)
+            self.timer.Start(dT*1000) # don't I need to stop it first?
+            self.update_display(stage, U, F, Tremain)
+        except StopIteration:
+            self.timer.Stop()
+            self.fg.out_off()
+            wx.MessageBox('Finished', 'Info')
+
+    def apply_state(self, u, f):
+        self.fg.set_freq(u)
+        self.fg.set_volt(f)
+        
     def update_display(self, mesg, u, f, t):
         """Updates display of function generator"""
         if u:
