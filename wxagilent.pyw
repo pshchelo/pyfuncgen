@@ -2,19 +2,18 @@
 # -*- coding: utf-8 -*-
 
 #FIXME: strange behaviour when disconnecting from hysical device
+# not disconnecting completely, after reconnect the display update is not working,
+# although voltage and frequency are updated (and the display is not locked)
 #TODO: get more clear idea about timings/steps.
-#total time - should at this moment the final value just be reached
+# total time - should at this moment the final value just be reached
 # and held for some time more? or is it a final point, where all finishes?
 # since I simulate here a continuous linear ramp, probably the second variant
 # is more appropriate
 # N of steps - realy N of steps (transitions) or N of resulting states?
-#TODO: add abort and pause buttons for running protocol
 #TODO: add display of current parameters (frequency and voltage)
 #TODO: add manual controls of the function generator
 # that is some controls to turn output on/off, set Voltage and frequency
-# and report them back
-#TODO: think of something more elegant (generators? threads?) than flattening the array
-# of all states between all stages of protocol
+#TODO: think of something more elegant (generators? threads?) than list inflating
 #TODO:? add scripting so that any command can be sent to the device with
 # pyVISA interface of read, write or ask.
 
@@ -67,6 +66,9 @@ class AgilentApp(wx.App):
         self.saveFileBtn = xrc.XRCCTRL(self.frame, 'wxID_SAVE')
         self.openFileBtn = xrc.XRCCTRL(self.frame, 'wxID_OPEN')
         self.startBtn = xrc.XRCCTRL(self.frame, 'startBtn')
+        self.pauseBtn = xrc.XRCCTRL(self.frame, 'pauseBtn')
+        self.stopBtn = xrc.XRCCTRL(self.frame, 'stopBtn')
+        
         
         self.connectBtn.Bind(wx.EVT_TOGGLEBUTTON, self.OnToggleConnect)
         self.devListRefreshBtn.Bind(wx.EVT_BUTTON, self.OnDevListRefresh)
@@ -75,7 +77,9 @@ class AgilentApp(wx.App):
         self.cleanRowsBtn.Bind(wx.EVT_BUTTON, self.OnCleanRows)
         self.saveFileBtn.Bind(wx.EVT_BUTTON, self.OnSaveFile)
         self.openFileBtn.Bind(wx.EVT_BUTTON, self.OnOpenFile)
-        self.startBtn.Bind(wx.EVT_TOGGLEBUTTON, self.OnToggleStart)
+        self.startBtn.Bind(wx.EVT_BUTTON, self.OnStart)
+        self.pauseBtn.Bind(wx.EVT_TOGGLEBUTTON, self.OnTogglePause)
+        self.stopBtn.Bind(wx.EVT_BUTTON, self.OnStop)
         
     def init_device_choice(self):
         """Init device choise combo box"""
@@ -104,13 +108,16 @@ class AgilentApp(wx.App):
     def OnToggleConnect(self, evt):
         """Handler for Connect/Dicsonnect device button."""
         evt.Skip()
+        self.toggle_connect()
+
+    def toggle_connect(self):
         if self.connectBtn.GetValue():# button was pressed
             self.fg.connect()
             if self.fg.dev:
                 self.connectBtn.SetLabel('disconnect')
             else:
                 self.OnError('Can not connect to device %s'%self.fg.devicename)
-                self.ConnectBtn.SetValue(0)
+                self.connectBtn.SetValue(0)
         else: #button was depressed
             self.fg.disconnect()
             self.connectBtn.SetLabel('connect')
@@ -147,32 +154,27 @@ class AgilentApp(wx.App):
         self.set_grid_data(data)
         self.clean_rows()
         
-    def OnToggleStart(self, evt):
-        """Start executing protocol from the grid."""
-        if self.startBtn.GetValue(): #button was pressed
-            self.startBtn.SetLabel('Abort')
-            self.execute()
-        else:
-            self.startBtn.SetLabel('Start')
-            self.timer.Stop()
-        evt.Skip()
-    
-    def OnError(self, mesg):
-        if mesg:
-            dlg = wx.MessageDialog(self.frame, mesg, 'Error', style=wx.OK|wx.ICON_ERROR)
-            dlg.ShowModal()
-    
-    def OnCleanRows(self, evt):
-        self.clean_rows()
-        evt.Skip()
+    def OnStart(self, evt):
+        """Start executing protocol from the grid.
         
-    def execute(self):
-        """Perform actual protocol."""
-        #TODO: check for connection, if not - connect
+        several different timers one after another was too problematic,
+        so the dirty hack is to inflate lists of parameters and flatten it
+        to 1-dimensional list of "states" which all have the same structure. 
+        """
+        #check that device is connected
+        if not self.connectBtn.GetValue():
+            self.toggle_connect()
+            
+        #check if the timer is already running or paused
+        if self.timer.IsRunning() or self.pauseBtn.GetValue():
+            evt.Skip()
+            return
+        
         data = self.get_grid_data()
         out = []
+        
         for row in data:
-            #devise smth smarter here (dict?)
+            #TODO: devise smth smarter here (dict?)
             stage, T, Ustart, Fstart, Uend, Fend, Nsteps = row
             if Nsteps < 1:
                 self.OnError('Number of steps is incorrect')
@@ -188,20 +190,46 @@ class AgilentApp(wx.App):
             dU = (Uend - Ustart) / (Nsteps - 1)
             dF = (Fend - Fstart) / (Nsteps - 1)
             dT = T * 60 / (Nsteps - 1)
-            # exploding the (multi)dimensional list of heterogenious 
+            # inflating the (multi)dimensional list of heterogenious 
             # values into 1-dim list of (similar) states
             Us = [Ustart + dU*i for i in range(Nsteps)]
             Fs = [Fstart + dF*i for i in range(Nsteps)]
             Tremain = [T*60 - dT*i for i in range(Nsteps)]
             item = zip([stage,]*Nsteps, Us, Fs, Tremain, [dT,]*Nsteps)
             out.extend(item)
+
         self.protocol = iter(out[1:])
         stage0, U0, F0, Tremain0, dT0 = out[0]
         self.apply_state(U0, F0)
         self.fg.out_on()
         self.update_display(stage0, U0, F0, Tremain0)
         self.timer.Start(dT0*1000)
-
+        
+        evt.Skip()
+        
+    def OnStop(self, evt):
+        self.timer.Stop()
+        evt.Skip()
+        
+    def OnTogglePause(self, evt):
+        if self.pauseBtn.GetValue():
+            self.pauseBtn.SetLabel("CONTINUE")
+            print 'pausing'
+            self.timer.Stop()
+        else:
+            self.pauseBtn.SetLabel("PAUSE")
+            print 'continuing'
+            self.timer.Start()
+        
+    def OnError(self, mesg):
+        if mesg:
+            dlg = wx.MessageDialog(self.frame, mesg, 'Error', style=wx.OK|wx.ICON_ERROR)
+            dlg.ShowModal()
+    
+    def OnCleanRows(self, evt):
+        self.clean_rows()
+        evt.Skip()
+        
     def advance(self, evt):
         """Perform next step of iteration"""
         try:

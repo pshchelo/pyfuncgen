@@ -4,10 +4,7 @@
     <object class="wxBoxSizer">
       <orient>wxHORIZONTAL</orient>
       <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND</flag>
-        <object class="wxPanel" name="mainpanel">
-          <style>wxTAB_TRAVERSAL</style>
+        <object class="wxPanel" name="mainPnl">
           <object class="wxBoxSizer">
             <orient>wxVERTICAL</orient>
             <object class="sizeritem">
@@ -34,6 +31,9 @@
                   </object>
                 </object>
               </object>
+            </object>
+            <object class="sizeritem">
+              <object class="wxPanel" name="manualPnl"/>
             </object>
             <object class="sizeritem">
               <object class="wxGrid" name="protocolGrid">
@@ -79,8 +79,22 @@
               <object class="wxBoxSizer">
                 <orient>wxHORIZONTAL</orient>
                 <object class="sizeritem">
-                  <object class="wxToggleButton" name="startBtn">
-                    <label>Start</label>
+                  <object class="wxButton" name="startBtn">
+                    <label>START</label>
+                  </object>
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxToggleButton" name="pauseBtn">
+                    <label>PAUSE</label>
+                  </object>
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxButton" name="stopBtn">
+                    <label>STOP</label>
                   </object>
                   <option>1</option>
                   <flag>wxEXPAND</flag>
@@ -88,7 +102,10 @@
               </object>
             </object>
           </object>
+          <style>wxTAB_TRAVERSAL</style>
         </object>
+        <option>1</option>
+        <flag>wxEXPAND</flag>
       </object>
     </object>
     <title>pyFuncGen</title>
