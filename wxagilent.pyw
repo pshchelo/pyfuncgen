@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+#FIXME: strange behaviour when disconnecting from hysical device
 #TODO: get more clear idea about timings/steps.
 #total time - should at this moment the final value just be reached
 # and held for some time more? or is it a final point, where all finishes?
@@ -214,8 +215,8 @@ class AgilentApp(wx.App):
             wx.MessageBox('Finished', 'Info')
 
     def apply_state(self, u, f):
-        self.fg.set_freq(u)
-        self.fg.set_volt(f)
+        self.fg.set_freq(f)
+        self.fg.set_volt(u)
         
     def update_display(self, mesg, u, f, t):
         """Updates display of function generator"""
