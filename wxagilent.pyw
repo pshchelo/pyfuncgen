@@ -102,6 +102,7 @@ class AgilentApp(wx.App):
         evt.Skip()
         
     def OnDevListRefresh(self, evt):
+        reload(pyagilent) # is this really needed?
         self.init_device_choice()
         evt.Skip()
         

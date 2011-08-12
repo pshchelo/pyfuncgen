@@ -1,23 +1,12 @@
 """Control the Agilent function generator with PyVISA over USB
-1 : import visa
-2 : visa.get_instruments_list()
-3 : visa.get_instruments_list()
-4 : fg = visa.instrument('USBInstrument2')
-5 : fg
-6 : fg.write('*RST')
-7 : fg.write("FREQ 10")
-8 : fg.write("VOLT 0.5")
-9 : fg.write("OUTP ON")
-10: fg.write("DISP:TEXT 'Voltage 0.5 Vpp\rFrequency 10 Hz'")
-11: fg.write("DISP:TEXT:CLE")
-12: fg.write("OUTP OFF")
-13: fg.clear()
-14: fg.close()
-15: fg = visa.instrument('USBInstrument2')
-16: fg.write("DISP:TEXT 'Voltage 0.5 Vpp\rFrequency 10 Hz'")
-17: fg.write("DISP:TEXT:CLE")
-18: fg.write("SYST:COMM:RLST LOC")
-19: fg.write("*RST")
+
+With working visa implementation but without any connected devices:
+from visa import ... works fine
+get_instruments_list throws VisaIOError exception
+
+With pyvisa installed but without a working visa implementation:
+from visa import ... ???
+get_instruments_list ???
 """
 from __future__ import division
 from sys import stdout, exit
