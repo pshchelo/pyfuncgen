@@ -5,21 +5,21 @@ from visa import ... works fine
 get_instruments_list throws VisaIOError exception
 
 With pyvisa installed but without a working visa implementation:
-from visa import ... ???
-get_instruments_list ???
+from visa import ... fails with AttributeError: function 'viOpen' not found
 """
 from __future__ import division
 from sys import stdout, exit
 import argparse
 from time import time, sleep
 
+# catch situation of pyVISA not installed or installed with no low-level VISA implementation present
 try:
     from visa import get_instruments_list, instrument, VisaIOError
 except (ImportError, AttributeError):
     print "Warning! Using dummies instead of real VISA."
-    # Dummy substitutes for real pyVISA classes and functions
-    # for developing/debugging on platforms without VISA implementation
-    def get_instruments_list():
+    # Dummy substitutes for developing/debugging 
+    # on platforms without pyVISA / VISA implementation
+    def get_devices():
         return ['dev1', 'dev2']
 
     def instrument(name):
@@ -36,6 +36,19 @@ except (ImportError, AttributeError):
     class VisaIOError(Exception):
         pass
     # end of dummy classes and functions
+else:
+    def get_devices():
+        """Return list of connected VISA devices.
+        
+        Wrapper for pyVISA's get_instruments_list(). Use this preferably,
+        since it handles situation of working VISA/pyVISA environment
+        but no devices connected by returning an empty list.
+        """
+        try:
+            devlist = get_instruments_list()
+        except VisaIOError:
+            devlist = []
+        return devlist
 
 class AgilentFuncGen(object):
     #TODO: turn those values that can be set and polled for into class properties
@@ -81,14 +94,7 @@ class AgilentFuncGen(object):
         else:
             text = '\r'.join(lines)
         self.dev.write("DISP:TEXT '%s'"%text)
-    
-def get_devices():
-    try:
-        devlist = get_instruments_list()
-    except VisaIOError:
-        devlist = []
-    return devlist
-    
+        
 def update_disp(device, mesg, u, f, t):
     if u:
         u = '%.2f'%u

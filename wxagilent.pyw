@@ -4,12 +4,7 @@
 #FIXME: strange behaviour when disconnecting from hysical device
 # not disconnecting completely, after reconnect the display update is not working,
 # although voltage and frequency are updated (and the display is not locked)
-#TODO: get more clear idea about timings/steps.
-# total time - should at this moment the final value just be reached
-# and held for some time more? or is it a final point, where all finishes?
-# since I simulate here a continuous linear ramp, probably the second variant
-# is more appropriate
-# N of steps - realy N of steps (transitions) or N of resulting states?
+# probably this has something to do with how the dummies are loaded/reloaded
 #TODO: add display of current parameters (frequency and voltage)
 #TODO: add manual controls of the function generator
 # that is some controls to turn output on/off, set Voltage and frequency
@@ -17,6 +12,7 @@
 #TODO:? add scripting so that any command can be sent to the device with
 # pyVISA interface of read, write or ask.
 
+from __future__ import division
 import csv
 import time
 
@@ -47,7 +43,7 @@ class AgilentApp(wx.App):
         self.frame.Bind(wx.EVT_CLOSE, self.OnClose)
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.advance, self.timer)
-        self.fg = pyagilent.AgilentFuncGen(self.deviceChoice.GetStringSelection())
+        self.fg = None
         return True
     
     def init_frame(self):
@@ -113,6 +109,7 @@ class AgilentApp(wx.App):
 
     def toggle_connect(self):
         if self.connectBtn.GetValue():# button was pressed
+            self.fg = pyagilent.AgilentFuncGen(self.deviceChoice.GetStringSelection())
             self.fg.connect()
             if self.fg.dev:
                 self.connectBtn.SetLabel('disconnect')
@@ -121,6 +118,7 @@ class AgilentApp(wx.App):
                 self.connectBtn.SetValue(0)
         else: #button was depressed
             self.fg.disconnect()
+            self.fg = None
             self.connectBtn.SetLabel('connect')
     
     def OnAddRow(self, evt):
@@ -162,7 +160,7 @@ class AgilentApp(wx.App):
         so the dirty hack is to inflate lists of parameters and flatten it
         to 1-dimensional list of "states" which all have the same structure. 
         """
-        #check that device is connected
+        #check that device is connected - simply checks the widget state
         if not self.connectBtn.GetValue():
             self.toggle_connect()
             
@@ -176,30 +174,31 @@ class AgilentApp(wx.App):
         
         for row in data:
             #TODO: devise smth smarter here (dict?)
-            stage, T, Ustart, Fstart, Uend, Fend, Nsteps = row
-            if Nsteps < 1:
-                self.OnError('Number of steps is incorrect')
+            stage, T, Ustart, Fstart, Uend, Fend, Nstates = row
+            if Nstates < 1:
+                self.OnError('Number of states is incorrect')
                 return
-            elif Nsteps == 1:
+            elif Nstates == 1:
                 if Ustart == Uend and Fstart == Fend:
                     dU = 0
                     dF = 0
                     dT = T*60
                 else:
-                    self.OnError("Number of steps is incorrect")
+                    self.OnError("Number of states is incorrect")
                     return
-            dU = (Uend - Ustart) / (Nsteps - 1)
-            dF = (Fend - Fstart) / (Nsteps - 1)
-            dT = T * 60 / (Nsteps - 1)
+            else:
+                dU = (Uend - Ustart) / (Nstates - 1)
+                dF = (Fend - Fstart) / (Nstates - 1)
+                dT = T * 60 / Nstates
             # inflating the (multi)dimensional list of heterogenious 
             # values into 1-dim list of (similar) states
-            Us = [Ustart + dU*i for i in range(Nsteps)]
-            Fs = [Fstart + dF*i for i in range(Nsteps)]
-            Tremain = [T*60 - dT*i for i in range(Nsteps)]
-            item = zip([stage,]*Nsteps, Us, Fs, Tremain, [dT,]*Nsteps)
+            Us = [Ustart + dU*i for i in range(Nstates)]
+            Fs = [Fstart + dF*i for i in range(Nstates)]
+            Tremain = [T*60 - dT*i for i in range(Nstates)]
+            item = zip([stage,]*Nstates, Us, Fs, Tremain, [dT,]*Nstates)
             out.extend(item)
 
-        self.protocol = iter(out[1:])
+        self.protocol = iter(out[1:]) #returns empty iterator when len(out)==1
         stage0, U0, F0, Tremain0, dT0 = out[0]
         self.apply_state(U0, F0)
         self.fg.out_on()
@@ -209,7 +208,7 @@ class AgilentApp(wx.App):
         evt.Skip()
         
     def OnStop(self, evt):
-        self.timer.Stop()
+        self.finish()
         evt.Skip()
         
     def OnTogglePause(self, evt):
@@ -235,13 +234,18 @@ class AgilentApp(wx.App):
         """Perform next step of iteration"""
         try:
             stage, U, F, Tremain, dT = self.protocol.next()
-            self.apply_state(U, F)
-            self.timer.Start(dT*1000) # don't I need to stop it first?
-            self.update_display(stage, U, F, Tremain)
         except StopIteration:
-            self.timer.Stop()
-            self.fg.out_off()
-            wx.MessageBox('Finished', 'Info')
+            self.finish()
+        else:
+            self.apply_state(U, F)
+            self.timer.Start(dT*1000) 
+            self.update_display(stage, U, F, Tremain)
+    
+    def finish(self):
+        """Finishes the execution of the protocol"""
+        self.timer.Stop()
+        self.fg.out_off()
+        wx.MessageBox('Finished', 'Info')
 
     def apply_state(self, u, f):
         self.fg.set_freq(f)
