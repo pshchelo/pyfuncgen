@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#FIXME: strange behaviour when disconnecting from hysical device
-# not disconnecting completely, after reconnect the display update is not working,
-# although voltage and frequency are updated (and the display is not locked)
-# probably this has something to do with how the dummies are loaded/reloaded
 #TODO: add display of current parameters (frequency and voltage)
 #TODO: add manual controls of the function generator
 # that is some controls to turn output on/off, set Voltage and frequency
@@ -29,7 +25,7 @@ PROTOCOLCOLS = [
                 ('start f, Hz', float), 
                 ('end Upp, V', float), 
                 ('end f, Hz', float),
-                ('No of steps', int),
+                ('No of points', int),
                 ]
 
 class AgilentApp(wx.App):
@@ -93,34 +89,44 @@ class AgilentApp(wx.App):
     
     def OnClose(self, evt):
         #TODO: try to poll the device if it is connected
-        if self.connectBtn.GetValue():
-            self.fg.disconnect()
+        if self.fg:
+            if self.connectBtn.GetValue():
+                self.fg.disconnect()
+                self.fg.clear_display()
+            self.fg.close()
         evt.Skip()
         
     def OnDevListRefresh(self, evt):
-        reload(pyagilent) # is this really needed?
         self.init_device_choice()
         evt.Skip()
         
     def OnToggleConnect(self, evt):
         """Handler for Connect/Dicsonnect device button."""
         evt.Skip()
-        self.toggle_connect()
-
-    def toggle_connect(self):
         if self.connectBtn.GetValue():# button was pressed
-            self.fg = pyagilent.AgilentFuncGen(self.deviceChoice.GetStringSelection())
-            self.fg.connect()
-            if self.fg.dev:
-                self.connectBtn.SetLabel('disconnect')
-            else:
-                self.OnError('Can not connect to device %s'%self.fg.devicename)
-                self.connectBtn.SetValue(0)
+            self.connect()
         else: #button was depressed
-            self.fg.disconnect()
-            self.fg = None
-            self.connectBtn.SetLabel('connect')
-    
+            self.disconnect()
+
+    def connect(self):
+        self.fg = pyagilent.AgilentFuncGen(self.deviceChoice.GetStringSelection())
+        self.fg.connect()
+        if self.fg.dev:
+            if not self.connectBtn.GetValue():
+                self.connectBtn.SetValue(True)
+            self.connectBtn.SetLabel('disconnect')
+            return True
+        else:
+            self.OnError('Can not connect to device %s'%self.fg.devicename)
+            self.connectBtn.SetValue(0)
+            return False
+
+    def disconnect(self):
+        self.fg.disconnect()
+        self.fg.close()
+        self.connectBtn.SetValue(False)
+        self.connectBtn.SetLabel('connect')
+
     def OnAddRow(self, evt):
         """Handler for Add Row button."""
         mesg = self.protocolGrid.AppendRows(1)
@@ -150,8 +156,9 @@ class AgilentApp(wx.App):
         filename = filedlg.GetFilename()
         filedlg.Destroy()
         data = self.read_data(filename)
-        self.set_grid_data(data)
-        self.clean_rows()
+        if data:
+            self.set_grid_data(data)
+            self.clean_rows()
         
     def OnStart(self, evt):
         """Start executing protocol from the grid.
@@ -162,7 +169,9 @@ class AgilentApp(wx.App):
         """
         #check that device is connected - simply checks the widget state
         if not self.connectBtn.GetValue():
-            self.toggle_connect()
+            if not self.connect():
+                evt.Skip()
+                return
             
         #check if the timer is already running or paused
         if self.timer.IsRunning() or self.pauseBtn.GetValue():
@@ -245,6 +254,7 @@ class AgilentApp(wx.App):
         """Finishes the execution of the protocol"""
         self.timer.Stop()
         self.fg.out_off()
+        self.fg.clear_display()
         wx.MessageBox('Finished', 'Info')
 
     def apply_state(self, u, f):

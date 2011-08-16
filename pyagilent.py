@@ -51,26 +51,27 @@ else:
         return devlist
 
 class AgilentFuncGen(object):
-    #TODO: turn those values that can be set and polled for into class properties
-    """Represents a said function generator"""
+    #TODO: turn those values that can be set and polled for into properties
+    """Represents a function generator"""
     def __init__(self, devname):
-        self.devname = devname
-    
-    def connect(self):
-        if self.devname in get_devices():
-            self.dev = instrument(self.devname)
-        else:
+        try:
+            self.dev = instrument(devname)
+        except:
             self.dev = None
+    
+    def whoami(self):
+        return self.dev.ask("*IDN?")
+        
+    def connect(self):
+        self.dev.write("SYST:COMM:RLST REM")
+    
+    def disconnect(self):
+        self.dev.write("SYST:COMM:RLST LOC")
     
     def reset(self):
         self.dev.write("*RST")
         
-    def disconnect(self):
-        self.out_off()
-        self.reset()
-        self.dev.write("DISP:TEXT:CLE")
-        self.reset()
-        self.dev.write("SYST:COMM:RLST LOC")
+    def close(self):
         self.dev.close()
     
     def out_off(self):
@@ -78,7 +79,7 @@ class AgilentFuncGen(object):
 
     def out_on(self):
         self.dev.write("OUTP ON")
-    # TODO: check how this works
+        
     def out_poll(self):
         return self.dev.ask("OUTP?")
         
@@ -87,6 +88,9 @@ class AgilentFuncGen(object):
     
     def set_volt(self, u):
         self.dev.write("VOLT %.2f"%u)
+    
+    def clear_display(self):
+        self.dev.write("DISP:TEXT:CLE")
     
     def set_display(self, *lines):
         if len(lines) == 1:
@@ -217,7 +221,9 @@ def grow_3stages():
             update_disp(fg, stage, None, None, T)
         except KeyboardInterrupt:
             break
+    fg.clear_display()
     fg.disconnect()
+    fg.close()
     
 if __name__=='__main__':
     grow_3stages()
