@@ -158,7 +158,6 @@ class AgilentApp(wx.App):
         data = self.read_data(filename)
         if data:
             self.set_grid_data(data)
-            self.clean_rows()
         
     def OnStart(self, evt):
         """Start executing protocol from the grid.
@@ -301,9 +300,16 @@ class AgilentApp(wx.App):
         
     def set_grid_data(self, data):
         """Puts the data into the protocol grid."""
+        self.protocolGrid.ClearGrid()
+        rownumdata = len(data)
+        rownumgrid = self.protocolGrid.GetNumberRows()
+        if rownumdata > rownumgrid:
+            toadd = rownumdata - rownumgrid
+            self.protocolGrid.AppendRows(toadd)
         for rownum, row in enumerate(data):
             for colnum, value in enumerate(row):
                 self.protocolGrid.SetCellValue(rownum, colnum, value)
+        self.clean_rows()
                     
     def read_data(self, filename):
         """Reads data from CSV file"""
