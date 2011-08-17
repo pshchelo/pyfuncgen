@@ -32,7 +32,7 @@ class AgilentApp(wx.App):
     """GUI to control Agilent Function Generator"""
     def OnInit(self):
         """Init method of the app"""
-        self.res = xrc.XmlResource('agilentgui.xrc')
+        self.res = xrc.XmlResource('res/agilentgui.xrc')
         self.init_frame()
         self.SetTopWindow(self.frame)
         self.frame.Show()
