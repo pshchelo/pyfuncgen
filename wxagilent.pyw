@@ -10,12 +10,10 @@
 
 from __future__ import division
 import csv
-import time
 
 import wx
-from wx import xrc
-import wx.grid #for wxGrid to be loaded from XRC
-
+import wx.grid
+from pyfuncgen import FuncGenFrame
 import pyagilent
 
 PROTOCOLCOLS = [
@@ -28,50 +26,18 @@ PROTOCOLCOLS = [
                 ('No of points', int),
                 ]
 
-class AgilentApp(wx.App):
+class AgilentFrame(FuncGenFrame):
     """GUI to control Agilent Function Generator"""
-    def OnInit(self):
-        """Init method of the app"""
-        self.res = xrc.XmlResource('res/agilentgui.xrc')
-        self.init_frame()
-        self.SetTopWindow(self.frame)
-        self.frame.Show()
-        self.frame.Bind(wx.EVT_CLOSE, self.OnClose)
-        self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.advance, self.timer)
-        self.fg = None
-        return True
-    
-    def init_frame(self):
-        """Load components from XRC and bind them to handlers"""
-        self.frame = self.res.LoadFrame(None, 'AgilentFrame')
-        self.devListRefreshBtn = xrc.XRCCTRL(self.frame, 'devListRefreshBtn')
-        self.connectBtn = xrc.XRCCTRL(self.frame, 'connectBtn')
-        self.deviceChoice = xrc.XRCCTRL(self.frame, 'deviceChoice')
+    def __init__(self, *args, **kwargs):
+        FuncGenFrame.__init__(self, *args, **kwargs)
         self.init_device_choice()
-        
-        self.protocolGrid = xrc.XRCCTRL(self.frame, 'protocolGrid')
         self.init_grid()
-        
-        self.addRowBtn = xrc.XRCCTRL(self.frame, 'wxID_ADD')
-        self.cleanRowsBtn = xrc.XRCCTRL(self.frame, 'wxID_DELETE')
-        self.saveFileBtn = xrc.XRCCTRL(self.frame, 'wxID_SAVE')
-        self.openFileBtn = xrc.XRCCTRL(self.frame, 'wxID_OPEN')
-        self.startBtn = xrc.XRCCTRL(self.frame, 'startBtn')
-        self.pauseBtn = xrc.XRCCTRL(self.frame, 'pauseBtn')
-        self.stopBtn = xrc.XRCCTRL(self.frame, 'stopBtn')
-        
-        
-        self.connectBtn.Bind(wx.EVT_TOGGLEBUTTON, self.OnToggleConnect)
-        self.devListRefreshBtn.Bind(wx.EVT_BUTTON, self.OnDevListRefresh)
-        
-        self.addRowBtn.Bind(wx.EVT_BUTTON, self.OnAddRow)
-        self.cleanRowsBtn.Bind(wx.EVT_BUTTON, self.OnCleanRows)
-        self.saveFileBtn.Bind(wx.EVT_BUTTON, self.OnSaveFile)
-        self.openFileBtn.Bind(wx.EVT_BUTTON, self.OnOpenFile)
-        self.startBtn.Bind(wx.EVT_BUTTON, self.OnStart)
-        self.pauseBtn.Bind(wx.EVT_TOGGLEBUTTON, self.OnTogglePause)
-        self.stopBtn.Bind(wx.EVT_BUTTON, self.OnStop)
+        self.timer = wx.Timer()
+        self.Bind(wx.EVT_TIMER, self.advance, self.timer)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.fg = None
+        self.Layout()
+        self.Fit()
         
     def init_device_choice(self):
         """Init device choise combo box"""
@@ -80,12 +46,11 @@ class AgilentApp(wx.App):
         
     def init_grid(self):
         """Init protocol grid"""
-        self.protocolGrid.CreateGrid(10, len(PROTOCOLCOLS))
+        self.protocolGrid.CreateGrid(3, len(PROTOCOLCOLS))
         self.protocolGrid.EnableDragRowSize(0)
         for i, item in enumerate(PROTOCOLCOLS):
             title, format = item
             self.protocolGrid.SetColLabelValue(i, title)
-        self.protocolGrid.SetMinSize((630, 210))
     
     def OnClose(self, evt):
         #TODO: try to poll the device if it is connected
@@ -136,7 +101,7 @@ class AgilentApp(wx.App):
         
     def OnSaveFile(self, evt):
         """Saving grid content as CSV."""
-        filedlg = wx.FileDialog(self.frame, style=wx.FD_SAVE)
+        filedlg = wx.FileDialog(self, style=wx.FD_SAVE)
         if filedlg.ShowModal() != wx.ID_OK:
             filedlg.Destroy()
             return
@@ -149,7 +114,7 @@ class AgilentApp(wx.App):
     def OnOpenFile(self, evt):
         """Load grid content from CSV."""
         evt.Skip()
-        filedlg = wx.FileDialog(self.frame)
+        filedlg = wx.FileDialog(self)
         if filedlg.ShowModal() != wx.ID_OK:
             filedlg.Destroy()
             return
@@ -231,7 +196,7 @@ class AgilentApp(wx.App):
         
     def OnError(self, mesg):
         if mesg:
-            dlg = wx.MessageDialog(self.frame, mesg, 'Error', style=wx.OK|wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, mesg, 'Error', style=wx.OK|wx.ICON_ERROR)
             dlg.ShowModal()
     
     def OnCleanRows(self, evt):
@@ -344,5 +309,7 @@ class AgilentApp(wx.App):
                 break
         
 if __name__ == "__main__":
-    app = AgilentApp(False)
-    app.MainLoop()
+    agilentApp = wx.PySimpleApp(False)
+    frame = AgilentFrame(None, -1)
+    frame.Show()
+    agilentApp.MainLoop()
