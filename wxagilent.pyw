@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#TODO: add display of current parameters (frequency and voltage)
-#TODO: add manual controls of the function generator
-# that is some controls to turn output on/off, set Voltage and frequency
+#FIXME: fix layout fitting
+#TODO: make controlled/displayed values stand out visually
+#TODO:: merge ampl and freq controls and displays
+#TODO: make update_display use internal values of fg
+#TODO: rewrite to use properties of pyagilent.AgilentFuncGen instead of methods
+#TODO: use apply function of pyagilent.AgilentFuncGen instead of ampl and freq
 #TODO: think of something more elegant (generators? threads?) than list inflating
 #TODO:? add scripting so that any command can be sent to the device with
 # pyVISA interface of read, write or ask.
@@ -32,12 +35,18 @@ class AgilentFrame(FuncGenFrame):
         FuncGenFrame.__init__(self, *args, **kwargs)
         self.init_device_choice()
         self.init_grid()
-        self.timer = wx.Timer()
+        self.timer = wx.Timer(self, -1)
         self.Bind(wx.EVT_TIMER, self.advance, self.timer)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.fg = None
-        self.Layout()
+        self.basetitle = self.GetTitle()
         self.Fit()
+        self.inactivewhenrun = [self.amplCtrl, self.freqCtrl, 
+                                self.protocolGrid, self.addRowBtn,
+                                self.cleanRowsBtn, self.openFileBtn,
+                                self.saveFileBtn, self.connectBtn,
+                                self.applyBtn, self.toggleOutputBtn]
+##        self.stopBtn.Enable(True)
         
     def init_device_choice(self):
         """Init device choise combo box"""
@@ -51,7 +60,7 @@ class AgilentFrame(FuncGenFrame):
         for i, item in enumerate(PROTOCOLCOLS):
             title, format = item
             self.protocolGrid.SetColLabelValue(i, title)
-    
+        
     def OnClose(self, evt):
         #TODO: try to poll the device if it is connected
         if self.fg:
@@ -80,6 +89,10 @@ class AgilentFrame(FuncGenFrame):
             if not self.connectBtn.GetValue():
                 self.connectBtn.SetValue(True)
             self.connectBtn.SetLabel('disconnect')
+            self.amplCtrl.SetValue(self.fg.get_ampl())
+            self.freqCtrl.SetValue(self.fg.get_freq())
+            title = self.GetTitle()
+            self.SetTitle('%s - %s'%(self.basetitle, self.fg.whoami))
             return True
         else:
             self.OnError('Can not connect to device %s'%self.fg.devicename)
@@ -91,7 +104,29 @@ class AgilentFrame(FuncGenFrame):
         self.fg.close()
         self.connectBtn.SetValue(False)
         self.connectBtn.SetLabel('connect')
-
+        self.SetTitle(self.basetitle)
+    
+    def OnApply(self, evt):
+        evt.Skip()
+        u = self.amplCtrl.GetValue()
+        f = self.freqCtrl.GetValue()
+        self.apply_state(u,f)
+        self.update_display('manual', u, f, None)
+        
+    def OnToggleOutput(self, evt):
+        evt.Skip()
+        if self.toggleOutputBtn.GetValue():
+            try:
+                self.fg.out_on()
+            except:
+                self.OnError("Could not turn output on.\nCheck device state.")
+                self.toggleOutputBtn.SetValue(False)
+            else:
+                self.toggleOutputBtn.SetLabel('Output OFF')
+        else:
+            self.fg.out_off()
+            self.toggleOutputBtn.SetLabel('Output ON')
+            
     def OnAddRow(self, evt):
         """Handler for Add Row button."""
         mesg = self.protocolGrid.AppendRows(1)
@@ -145,6 +180,11 @@ class AgilentFrame(FuncGenFrame):
         data = self.get_grid_data()
         out = []
         
+        for item in self.inactivewhenrun:
+            item.Enable(False)
+        self.startBtn.Enable(False)
+        self.stopBtn.Enable(True)
+        
         for row in data:
             #TODO: devise smth smarter here (dict?)
             stage, T, Ustart, Fstart, Uend, Fend, Nstates = row
@@ -163,8 +203,8 @@ class AgilentFrame(FuncGenFrame):
                 dU = (Uend - Ustart) / (Nstates - 1)
                 dF = (Fend - Fstart) / (Nstates - 1)
                 dT = T * 60 / Nstates
-            # inflating the (multi)dimensional list of heterogenious 
-            # values into 1-dim list of (similar) states
+            # inflating the (multi)dimensional list of heterogeneous 
+            # values into combined 1-dim list of states
             Us = [Ustart + dU*i for i in range(Nstates)]
             Fs = [Fstart + dF*i for i in range(Nstates)]
             Tremain = [T*60 - dT*i for i in range(Nstates)]
@@ -182,6 +222,10 @@ class AgilentFrame(FuncGenFrame):
         
     def OnStop(self, evt):
         self.finish()
+        for item in self.inactivewhenrun:
+            item.Enable(True)
+        self.startBtn.Enable(True)
+        self.stopBtn.Enable(False)
         evt.Skip()
         
     def OnTogglePause(self, evt):
@@ -223,7 +267,7 @@ class AgilentFrame(FuncGenFrame):
 
     def apply_state(self, u, f):
         self.fg.set_freq(f)
-        self.fg.set_volt(u)
+        self.fg.set_ampl(u)
         
     def update_display(self, mesg, u, f, t):
         """Updates display of function generator"""
@@ -242,6 +286,10 @@ class AgilentFrame(FuncGenFrame):
         line1 = "%s - %s"%(mesg, T)
         line2 = '%s Vpp | %s Hz'%(U,F)
         self.fg.set_display(line1, line2)
+        self.stageDisplay.SetLabel(mesg)
+        self.timeDisplay.SetLabel(T)
+        self.amplDisplay.SetLabel('%.2f Vpp'%self.fg.ampl)
+        self.freqDisplay.SetLabel('%.6f Hz'%self.fg.freq)
         
     def get_grid_data(self):
         """Returns data from the table as list of rows"""

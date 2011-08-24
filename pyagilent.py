@@ -28,10 +28,26 @@ except (ImportError, AttributeError):
     class DummyDevice(object):
         def __init__(self, name):
             self.name = name
+            self.u = 0.1
+            self.f = 10000.0
         def write(self, cmd):
             print '%s - %s'%(self.name, cmd)
+            cmd_words = cmd.split()
+            if cmd_words[0] == 'FREQ':
+                self.f = float(cmd_words[1])
+            elif cmd_words[0] == 'VOLT':
+                self.u = float(cmd_words[1])
         def close(self):
             del self
+        def ask(self, cmd):
+            print '%s was asked for "%s"'%(self.name, cmd)
+            cmd_words = cmd.split()
+            if cmd_words[0] == 'FREQ?':
+                return self.f
+            elif cmd_words[0] == 'VOLT?':
+                return self.u
+            elif cmd_words[0] == '*IDN?':
+                return self.name
     
     class VisaIOError(Exception):
         pass
@@ -51,7 +67,9 @@ else:
         return devlist
 
 class AgilentFuncGen(object):
-    #TODO: turn those values that can be set and polled for into properties
+    #TODO: hide getters and setters of properties where it makes sense
+    #TODO: complete apply function, may be ditching freq and freq
+    #TODO: check for actual supported precision of freq and ampl
     """Represents a function generator"""
     def __init__(self, devname):
         try:
@@ -59,9 +77,10 @@ class AgilentFuncGen(object):
         except:
             self.dev = None
     
-    def whoami(self):
+    def _whoami(self):
         return self.dev.ask("*IDN?")
-        
+    whoami = property(_whoami, None, None, 'Internal device name')
+    
     def connect(self):
         self.dev.write("SYST:COMM:RLST REM")
     
@@ -79,16 +98,41 @@ class AgilentFuncGen(object):
 
     def out_on(self):
         self.dev.write("OUTP ON")
-        
-    def out_poll(self):
-        return self.dev.ask("OUTP?")
-        
+    
+    def set_output(self, value):
+        if value:
+            self.out_on()
+        else:
+            self.out_off()
+    def get_output(self):
+        return bool(self.dev.ask("OUTP?"))
+    output = property(get_output, set_output, None, "State of the device output")
+    
     def set_freq(self, f):
         self.dev.write("FREQ %.6f"%f)
-    
-    def set_volt(self, u):
+    def get_freq(self):
+        return float(self.dev.ask("FREQ?"))
+    freq = property(get_freq, set_freq, None, "Field frequency")
+    def set_ampl(self, u):
         self.dev.write("VOLT %.2f"%u)
+    def get_ampl(self):
+        return float(self.dev.ask("VOLT?"))
+    ampl = property(get_ampl, set_ampl, None, "Field amplitude")
     
+    def apply_sin(self, f, u=None, offset=None, mode='SIN'):
+        accepted_modes = ['SIN','SQU','RAMP','DC','NOIS','PULS','USER']
+        f_str = '%.6f'%f
+        if u:
+            u_str = '%.2f'%u
+        else:
+            u_str = ''
+        if offset:
+            offset_str = '%.2f'%offset
+        else:
+            offset_str = ''
+        if mode.upper() in accepted_modes:
+            self.dev.write("APPL:%s %s %s %s")%(mode, f_str, u_str, oddset_str)
+        
     def clear_display(self):
         self.dev.write("DISP:TEXT:CLE")
     
@@ -179,10 +223,10 @@ def grow_3stages():
     StepUgrow = (Uend-Ustart)/Ngrow
     U = [Ustart+i*StepUgrow for i in range(Ngrow+1)]
     fg.set_freq(Fmain)
-    fg.set_volt(Ustart)
+    fg.set_ampl(Ustart)
     fg.out_on()
     for i, u in enumerate(U):
-        fg.set_volt(u)
+        fg.set_ampl(u)
         Tremain = Tgrow*60-i*Trez
         update_disp(fg, stage, u, Fmain, Tremain)
         sleep(Trez)

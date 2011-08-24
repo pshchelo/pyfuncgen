@@ -28,9 +28,9 @@ setup(
                         }
                     ],
     
-    data_files = [
-                        ('res', ['res/agilentgui.xrc']),
-                        ],
+    ## data_files = [
+                        ## ('res', ['res/agilentgui.xrc']),
+                        ## ],
     ## zipfile = None,
     
     options = {'py2exe':{
