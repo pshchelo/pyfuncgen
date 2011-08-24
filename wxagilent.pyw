@@ -2,14 +2,16 @@
 # -*- coding: utf-8 -*-
 
 #FIXME: fix layout fitting
+#TODO: add option whether to switch output off or leave on after finishing the protocol
+#TODO: add option whether switch output off or leave it on when pausing protocol execution
 #TODO: make controlled/displayed values stand out visually
-#TODO:: merge ampl and freq controls and displays
+#TODO: merge ampl and freq controls and displays
+#TODO: add amplitude display in Vrms
 #TODO: make update_display use internal values of fg
 #TODO: rewrite to use properties of pyagilent.AgilentFuncGen instead of methods
 #TODO: use apply function of pyagilent.AgilentFuncGen instead of ampl and freq
 #TODO: think of something more elegant (generators? threads?) than list inflating
-#TODO:? add scripting so that any command can be sent to the device with
-# pyVISA interface of read, write or ask.
+#TODO:? add scripting so that any command can be sent to the device with pyVISA interface of write or ask
 
 from __future__ import division
 import csv
@@ -45,8 +47,10 @@ class AgilentFrame(FuncGenFrame):
                                 self.protocolGrid, self.addRowBtn,
                                 self.cleanRowsBtn, self.openFileBtn,
                                 self.saveFileBtn, self.connectBtn,
-                                self.applyBtn, self.toggleOutputBtn]
-##        self.stopBtn.Enable(True)
+                                self.applyBtn, self.toggleOutputBtn,
+                                self.startBtn]
+        self.activewhenrun = [self.stopBtn, self.pauseBtn]
+        self.pauseBtn.Enable(False)
         
     def init_device_choice(self):
         """Init device choise combo box"""
@@ -83,19 +87,24 @@ class AgilentFrame(FuncGenFrame):
             self.disconnect()
 
     def connect(self):
-        self.fg = pyagilent.AgilentFuncGen(self.deviceChoice.GetStringSelection())
-        self.fg.connect()
+        devname = self.deviceChoice.GetStringSelection()
+        self.fg = pyagilent.AgilentFuncGen(devname)
         if self.fg.dev:
+            self.fg.connect()
             if not self.connectBtn.GetValue():
                 self.connectBtn.SetValue(True)
             self.connectBtn.SetLabel('disconnect')
-            self.amplCtrl.SetValue(self.fg.get_ampl())
-            self.freqCtrl.SetValue(self.fg.get_freq())
+            u = self.fg.get_ampl()
+            f = self.fg.get_freq()
+            self.amplCtrl.SetValue(u)
+            self.freqCtrl.SetValue(f)
+            self.update_display('manual', f, u)
             title = self.GetTitle()
             self.SetTitle('%s - %s'%(self.basetitle, self.fg.whoami))
             return True
         else:
-            self.OnError('Can not connect to device %s'%self.fg.devicename)
+            self.fg = None
+            self.OnError('Can not connect to device %s'%devname)
             self.connectBtn.SetValue(0)
             return False
 
@@ -110,8 +119,11 @@ class AgilentFrame(FuncGenFrame):
         evt.Skip()
         u = self.amplCtrl.GetValue()
         f = self.freqCtrl.GetValue()
-        self.apply_state(u,f)
-        self.update_display('manual', u, f, None)
+        if self.fg:
+            self.apply_state(u,f)
+            self.update_display('manual', u, f, None)
+        else:
+            self.OnError('Could not apply values.\nCheck if the device is connected.')
         
     def OnToggleOutput(self, evt):
         evt.Skip()
@@ -178,12 +190,15 @@ class AgilentFrame(FuncGenFrame):
             return
         
         data = self.get_grid_data()
+        if len(data) == 0:
+            self.OnError("No protocol specified")
+            return
         out = []
         
         for item in self.inactivewhenrun:
             item.Enable(False)
-        self.startBtn.Enable(False)
-        self.stopBtn.Enable(True)
+        for item in self.activewhenrun:
+            item.Enable(True)
         
         for row in data:
             #TODO: devise smth smarter here (dict?)
@@ -222,10 +237,6 @@ class AgilentFrame(FuncGenFrame):
         
     def OnStop(self, evt):
         self.finish()
-        for item in self.inactivewhenrun:
-            item.Enable(True)
-        self.startBtn.Enable(True)
-        self.stopBtn.Enable(False)
         evt.Skip()
         
     def OnTogglePause(self, evt):
@@ -264,12 +275,16 @@ class AgilentFrame(FuncGenFrame):
         self.fg.out_off()
         self.fg.clear_display()
         wx.MessageBox('Finished', 'Info')
-
+        for item in self.inactivewhenrun:
+            item.Enable(True)
+        for item in self.activewhenrun:
+            item.Enable(False)
+    
     def apply_state(self, u, f):
         self.fg.set_freq(f)
         self.fg.set_ampl(u)
         
-    def update_display(self, mesg, u, f, t):
+    def update_display(self, mesg, u, f, t=None):
         """Updates display of function generator"""
         if u:
             U = '%.2f'%u

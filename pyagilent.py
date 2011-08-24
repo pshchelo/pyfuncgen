@@ -63,7 +63,7 @@ else:
         try:
             devlist = get_instruments_list()
         except VisaIOError:
-            devlist = []
+            devlist = ['no devices']
         return devlist
 
 class AgilentFuncGen(object):
