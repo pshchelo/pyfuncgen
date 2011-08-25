@@ -175,6 +175,8 @@ def grow_3stages():
         defaultdevice = None
     else:
         defaultdevice = get_devices()[0]
+        if defaultdevice == 'no devices':
+            defaultdevice = None
     optparser.add_argument('device', choices=get_devices(),
         default=defaultdevice,
         help='Device code to connect with (first found)', nargs='?')
@@ -209,8 +211,12 @@ def grow_3stages():
     Trest = args.t2
     Tdetach = args.t3
     Trez = args.dt
-
-    fg = AgilentFuncGen(args.device)
+    
+    if args.device:
+        fg = AgilentFuncGen(args.device)
+    else:
+        print 'No device present.'
+        exit(0)
     fg.connect()
     if not fg.dev:
         print 'could not connect to device %s'%fg.devname

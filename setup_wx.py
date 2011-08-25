@@ -51,7 +51,7 @@ manifest = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 setup(
     name = APPNAME,
-    version = '0.2.1',
+    version = '0.3.1',
     description = 'Function Generator Control',
     long_description = 'Control and run automated protocols on Function Generator',
     author = 'Pavlo Shchelokovskyy',
