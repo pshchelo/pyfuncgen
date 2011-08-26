@@ -223,40 +223,43 @@ def grow_3stages():
         exit(0)
     
     #growing stage
-    stage = 'Growing'
-    print '\n'+stage
-    Ngrow = Tgrow*60//Trez
-    StepUgrow = (Uend-Ustart)/Ngrow
-    U = [Ustart+i*StepUgrow for i in range(Ngrow+1)]
-    fg.set_freq(Fmain)
-    fg.set_ampl(Ustart)
-    fg.out_on()
-    for i, u in enumerate(U):
-        fg.set_ampl(u)
-        Tremain = Tgrow*60-i*Trez
-        update_disp(fg, stage, u, Fmain, Tremain)
-        sleep(Trez)
+    if Tgrow
+        stage = 'Growing'
+        print '\n'+stage
+        Ngrow = Tgrow*60//Trez
+        StepUgrow = (Uend-Ustart)/Ngrow
+        U = [Ustart+i*StepUgrow for i in range(Ngrow+1)]
+        fg.set_freq(Fmain)
+        fg.set_ampl(Ustart)
+        fg.out_on()
+        for i, u in enumerate(U):
+            fg.set_ampl(u)
+            Tremain = Tgrow*60-i*Trez
+            update_disp(fg, stage, u, Fmain, Tremain)
+            sleep(Trez)
     
     #resting stage
-    stage = 'Resting'
-    print '\n'+stage
-    Nrest = Trest*60//Trez
-    for i in range(Nrest):
-        Tremain = Trest*60-i*Trez
-        update_disp(fg, stage, Uend, Fmain, Tremain)
-        sleep(Trez)
+    if Trest:
+        stage = 'Resting'
+        print '\n'+stage
+        Nrest = Trest*60//Trez
+        for i in range(Nrest):
+            Tremain = Trest*60-i*Trez
+            update_disp(fg, stage, Uend, Fmain, Tremain)
+            sleep(Trez)
         
     #detachment stage
-    stage = 'Detaching'
-    print '\n'+stage
-    Ndetach = Tdetach*60//Trez
-    StepFdetach = (Fdetach-Fmain)/Ndetach
-    F = [Fmain+i*StepFdetach for i in range(Ndetach+1)]
-    for i, f in enumerate(F):
-        fg.set_freq(f)
-        Tremain = Tdetach*60-i*Trez
-        update_disp(fg, stage, Uend, f, Tremain)
-        sleep(Trez)
+    if Tdetach:
+        stage = 'Detaching'
+        print '\n'+stage
+        Ndetach = Tdetach*60//Trez
+        StepFdetach = (Fdetach-Fmain)/Ndetach
+        F = [Fmain+i*StepFdetach for i in range(Ndetach+1)]
+        for i, f in enumerate(F):
+            fg.set_freq(f)
+            Tremain = Tdetach*60-i*Trez
+            update_disp(fg, stage, Uend, f, Tremain)
+            sleep(Trez)
     
     #after-counter
     stage = 'Finished'
