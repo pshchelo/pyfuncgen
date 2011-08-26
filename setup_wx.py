@@ -52,13 +52,10 @@ setup(
     windows =[
         {
         'script':'wxagilent.pyw',
-        ## 'icon_resources': [(1, "icon.ico")],
+        'icon_resources': [(1, "Vippi.ico")],
         'other_resources': [( 24, 1, manifest)],
         }
     ],
-    ## data_files = [
-                        ## ('res', ['res/agilentgui.xrc']),
-                        ## ],
     zipfile = None,
     options = {'py2exe':{
         "bundle_files":1,
