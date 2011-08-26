@@ -56,6 +56,7 @@ setup(
         'other_resources': [( 24, 1, manifest)],
         }
     ],
+    data_files = ['Vippi.ico'],
     zipfile = None,
     options = {'py2exe':{
         "bundle_files":1,

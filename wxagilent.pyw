@@ -1,33 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#FIXME: fix layout fitting
-#TODO: add option whether to switch output off or leave on after finishing the protocol
-#TODO: add option whether switch output off or leave it on when pausing protocol execution
-#TODO: make controlled/displayed values stand out visually
-#TODO: merge ampl and freq controls and displays
-#TODO: add amplitude display in Vrms
-#TODO: make update_display use internal values of fg
-#TODO: rewrite to use properties of pyagilent.AgilentFuncGen instead of methods
-#TODO: use apply function of pyagilent.AgilentFuncGen instead of ampl and freq
+#TODO: add app icons from base64-encoded ones
+#TODO: auto layout and fit instead of setting the frame size by hand
 #TODO: think of something more elegant (generators? threads?) than list inflating
 #TODO:? add scripting so that any command can be sent to the device with pyVISA interface of write or ask
 
 from __future__ import division
 import csv
+from math import sqrt
 
 import wx
 import wx.grid
 from pyfuncgen import FuncGenFrame
 import pyagilent
+from appinfo import icon as ICON
 
 PROTOCOLCOLS = [
                 ('Stage', str),
                 ('t, min', int), 
-                ('start Upp, V', float), 
-                ('start f, Hz', float), 
-                ('end Upp, V', float), 
-                ('end f, Hz', float),
+                ('start U, Vpp', float), 
+                ('start F, Hz', float), 
+                ('end U, Vpp', float), 
+                ('end F, Hz', float),
                 ('No of points', int),
                 ]
 
@@ -37,12 +32,18 @@ class AgilentFrame(FuncGenFrame):
         FuncGenFrame.__init__(self, *args, **kwargs)
         self.init_device_choice()
         self.init_grid()
+        self.SetSize((690,390))
+        self.basetitle = self.GetTitle()
+        ib = wx.IconBundle()
+        ib.AddIconFromFile('Vippi.ico', wx.BITMAP_TYPE_ICO)
+        self.SetIcons(ib)
+        
         self.timer = wx.Timer(self, -1)
         self.Bind(wx.EVT_TIMER, self.advance, self.timer)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
+        
         self.fg = None
-        self.basetitle = self.GetTitle()
-        self.Fit()
+        
         self.inactivewhenrun = [self.amplCtrl, self.freqCtrl, 
                                 self.protocolGrid, self.addRowBtn,
                                 self.cleanRowsBtn, self.openFileBtn,
@@ -50,7 +51,7 @@ class AgilentFrame(FuncGenFrame):
                                 self.applyBtn, self.toggleOutputBtn,
                                 self.startBtn]
         self.activewhenrun = [self.stopBtn, self.pauseBtn]
-        self.pauseBtn.Enable(False)
+        
         
     def init_device_choice(self):
         """Init device choise combo box"""
@@ -66,12 +67,9 @@ class AgilentFrame(FuncGenFrame):
             self.protocolGrid.SetColLabelValue(i, title)
         
     def OnClose(self, evt):
-        #TODO: try to poll the device if it is connected
         if self.fg:
-            if self.connectBtn.GetValue():
-                self.fg.disconnect()
-                self.fg.clear_display()
-            self.fg.close()
+            self.fg.clear_display()
+            self.disconnect()
         evt.Skip()
         
     def OnDevListRefresh(self, evt):
@@ -94,11 +92,11 @@ class AgilentFrame(FuncGenFrame):
             if not self.connectBtn.GetValue():
                 self.connectBtn.SetValue(True)
             self.connectBtn.SetLabel('disconnect')
-            u = self.fg.get_ampl()
-            f = self.fg.get_freq()
+            u = self.fg.ampl
+            f = self.fg.freq
             self.amplCtrl.SetValue(u)
             self.freqCtrl.SetValue(f)
-            self.update_display('manual', f, u)
+            self.update_display('manual')
             title = self.GetTitle()
             self.SetTitle('%s - %s'%(self.basetitle, self.fg.whoami))
             return True
@@ -120,25 +118,40 @@ class AgilentFrame(FuncGenFrame):
         u = self.amplCtrl.GetValue()
         f = self.freqCtrl.GetValue()
         if self.fg:
-            self.apply_state(u,f)
-            self.update_display('manual', u, f, None)
+            self.fg.apply(f,u)
+            self.update_display('manual')
         else:
             self.OnError('Could not apply values.\nCheck if the device is connected.')
         
     def OnToggleOutput(self, evt):
         evt.Skip()
         if self.toggleOutputBtn.GetValue():
-            try:
-                self.fg.out_on()
-            except:
+            if not self.output_on():
                 self.OnError("Could not turn output on.\nCheck device state.")
-                self.toggleOutputBtn.SetValue(False)
-            else:
-                self.toggleOutputBtn.SetLabel('Output OFF')
         else:
+            if not self.output_off():
+                self.OnError("Could not turn output off.\nCheck device state.")
+
+    def output_on(self):
+        try:
+            self.fg.out_on()
+        except:
+            return False
+        else:
+            self.toggleOutputBtn.SetValue(True)
+            self.toggleOutputBtn.SetLabel('Output OFF')
+            return True
+        
+    def output_off(self):
+        try:
             self.fg.out_off()
+        except:
+            return False
+        else:
+            self.toggleOutputBtn.SetValue(False)
             self.toggleOutputBtn.SetLabel('Output ON')
-            
+            return True
+        
     def OnAddRow(self, evt):
         """Handler for Add Row button."""
         mesg = self.protocolGrid.AppendRows(1)
@@ -180,6 +193,7 @@ class AgilentFrame(FuncGenFrame):
         """
         #check that device is connected - simply checks the widget state
         if not self.connectBtn.GetValue():
+            #trying to connect if not yet connected
             if not self.connect():
                 evt.Skip()
                 return
@@ -227,10 +241,10 @@ class AgilentFrame(FuncGenFrame):
             out.extend(item)
 
         self.protocol = iter(out[1:]) #returns empty iterator when len(out)==1
-        stage0, U0, F0, Tremain0, dT0 = out[0]
-        self.apply_state(U0, F0)
-        self.fg.out_on()
-        self.update_display(stage0, U0, F0, Tremain0)
+        stage0, u0, f0, Tremain0, dT0 = out[0]
+        self.fg.apply(f0, u0)
+        self.output_on()
+        self.update_display(stage0, Tremain0)
         self.timer.Start(dT0*1000)
         
         evt.Skip()
@@ -244,10 +258,16 @@ class AgilentFrame(FuncGenFrame):
             self.pauseBtn.SetLabel("CONTINUE")
             print 'pausing'
             self.timer.Stop()
+            if not self.leaveOutPauseCb.GetValue():
+                if not self.output_off():
+                    self.OnError("Could not turn output off.\nCheck device state.")
         else:
             self.pauseBtn.SetLabel("PAUSE")
             print 'continuing'
             self.timer.Start()
+            if not self.leaveOutPauseCb.GetValue():
+                if not self.output_on():
+                    self.OnError("Could not turn output on.\nCheck device state.")
         
     def OnError(self, mesg):
         if mesg:
@@ -261,31 +281,30 @@ class AgilentFrame(FuncGenFrame):
     def advance(self, evt):
         """Perform next step of iteration"""
         try:
-            stage, U, F, Tremain, dT = self.protocol.next()
+            stage, u, f, Tremain, dT = self.protocol.next()
         except StopIteration:
             self.finish()
         else:
-            self.apply_state(U, F)
+            self.fg.apply(f, u)
             self.timer.Start(dT*1000) 
-            self.update_display(stage, U, F, Tremain)
+            self.update_display(stage, Tremain)
     
     def finish(self):
         """Finishes the execution of the protocol"""
         self.timer.Stop()
-        self.fg.out_off()
+        if not self.leaveOutFinishCb.GetValue():
+            self.output_off()
         self.fg.clear_display()
         wx.MessageBox('Finished', 'Info')
         for item in self.inactivewhenrun:
             item.Enable(True)
         for item in self.activewhenrun:
             item.Enable(False)
-    
-    def apply_state(self, u, f):
-        self.fg.set_freq(f)
-        self.fg.set_ampl(u)
         
-    def update_display(self, mesg, u, f, t=None):
+    def update_display(self, mesg, t=None):
         """Updates display of function generator"""
+        f = self.fg.freq
+        u = self.fg.ampl
         if u:
             U = '%.2f'%u
         else:
@@ -303,8 +322,10 @@ class AgilentFrame(FuncGenFrame):
         self.fg.set_display(line1, line2)
         self.stageDisplay.SetLabel(mesg)
         self.timeDisplay.SetLabel(T)
-        self.amplDisplay.SetLabel('%.2f Vpp'%self.fg.ampl)
-        self.freqDisplay.SetLabel('%.6f Hz'%self.fg.freq)
+        self.amplCtrl.SetValue(u)
+        self.freqCtrl.SetValue(f)
+        self.amplVrmsDisplay.SetLabel('%.2f Vrms'%(u/sqrt(2)))
+        self.Layout()
         
     def get_grid_data(self):
         """Returns data from the table as list of rows"""
