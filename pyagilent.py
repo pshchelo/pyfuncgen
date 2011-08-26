@@ -12,6 +12,10 @@ from sys import stdout, exit
 import argparse
 from time import time, sleep
 
+#TODO: put agilent object in separate module
+#TODO: make a base class (meta-?) with general pyVISA stuff and derive Agilent
+#      class from it, implementing the specific commands
+
 # catch situation of pyVISA not installed or installed with no low-level VISA implementation present
 try:
     from visa import get_instruments_list, instrument, VisaIOError
@@ -30,13 +34,20 @@ except (ImportError, AttributeError):
             self.name = name
             self.u = 0.1
             self.f = 10000.0
-        def write(self, cmd):
-            print '%s - %s'%(self.name, cmd)
-            cmd_words = cmd.split()
-            if cmd_words[0] == 'FREQ':
-                self.f = float(cmd_words[1])
+        def write(self, s):
+            print '%s - %s'%(self.name, s)
+            cmd_words = s.split()
+            cmd = cmd_words[0]
+            s_params = ' '.join(cmd_words[1:])
+            params = s_params.split(', ')
+            if cmd[0] == 'FREQ':
+                self.f = float(params[0])
             elif cmd_words[0] == 'VOLT':
-                self.u = float(cmd_words[1])
+                self.u = float(params[0])
+            elif  'APPL' == cmd.split(':')[0]:
+                self.f = float(params[0])
+                if len(params) > 1:
+                    self.u = float(params[1])
         def close(self):
             del self
         def ask(self, cmd):
@@ -67,8 +78,6 @@ else:
         return devlist
 
 class AgilentFuncGen(object):
-    #TODO: hide getters and setters of properties where it makes sense
-    #TODO: complete apply function, may be ditching freq and freq
     #TODO: check for actual supported precision of freq and ampl
     """Represents a function generator"""
     def __init__(self, devname):
@@ -76,6 +85,7 @@ class AgilentFuncGen(object):
             self.dev = instrument(devname)
         except:
             self.dev = None
+        self.accepted_modes = ['SIN','SQU','RAMP','DC','NOIS','PULS','USER']
     
     def _whoami(self):
         return self.dev.ask("*IDN?")
@@ -99,39 +109,34 @@ class AgilentFuncGen(object):
     def out_on(self):
         self.dev.write("OUTP ON")
     
-    def set_output(self, value):
+    def _set_output(self, value):
         if value:
             self.out_on()
         else:
             self.out_off()
-    def get_output(self):
+    def _get_output(self):
         return bool(self.dev.ask("OUTP?"))
-    output = property(get_output, set_output, None, "State of the device output")
+    output = property(_get_output, _set_output, None, "State of the device output")
     
-    def set_freq(self, f):
+    def _set_freq(self, f):
         self.dev.write("FREQ %.6f"%f)
-    def get_freq(self):
+    def _get_freq(self):
         return float(self.dev.ask("FREQ?"))
-    freq = property(get_freq, set_freq, None, "Field frequency")
-    def set_ampl(self, u):
+    freq = property(_get_freq, _set_freq, None, "Field frequency")
+    def _set_ampl(self, u):
         self.dev.write("VOLT %.2f"%u)
-    def get_ampl(self):
+    def _get_ampl(self):
         return float(self.dev.ask("VOLT?"))
-    ampl = property(get_ampl, set_ampl, None, "Field amplitude")
+    ampl = property(_get_ampl, _set_ampl, None, "Field amplitude")
     
-    def apply_sin(self, f, u=None, offset=None, mode='SIN'):
-        accepted_modes = ['SIN','SQU','RAMP','DC','NOIS','PULS','USER']
-        f_str = '%.6f'%f
-        if u:
-            u_str = '%.2f'%u
-        else:
-            u_str = ''
-        if offset:
-            offset_str = '%.2f'%offset
-        else:
-            offset_str = ''
-        if mode.upper() in accepted_modes:
-            self.dev.write("APPL:%s %s %s %s")%(mode, f_str, u_str, oddset_str)
+    def apply(self, f, u=None, offset=None, mode='SIN'):
+        if mode.upper() in self.accepted_modes:
+            cmd = mode.upper() + ' %.6f'%f
+            if u:
+                cmd += ', %.2f'%u
+                if offset:
+                    CMD += ', %.2f'%offset
+            self.dev.write("APPL:%s"%cmd)
         
     def clear_display(self):
         self.dev.write("DISP:TEXT:CLE")
@@ -223,7 +228,7 @@ def grow_3stages():
         exit(0)
     
     #growing stage
-    if Tgrow
+    if Tgrow:
         stage = 'Growing'
         print '\n'+stage
         Ngrow = Tgrow*60//Trez
