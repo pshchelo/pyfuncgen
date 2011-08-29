@@ -12,6 +12,7 @@ from sys import stdout, exit
 import argparse
 from time import time, sleep
 
+#TODO: make clear choices when excluding particular stages
 #TODO: put agilent object in separate module
 #TODO: make a base class (meta-?) with general pyVISA stuff and derive Agilent
 #      class from it, implementing the specific commands
@@ -234,11 +235,11 @@ def grow_3stages():
         Ngrow = Tgrow*60//Trez
         StepUgrow = (Uend-Ustart)/Ngrow
         U = [Ustart+i*StepUgrow for i in range(Ngrow+1)]
-        fg.set_freq(Fmain)
-        fg.set_ampl(Ustart)
+        fg.freq = Fmain
+        fg.ampl = Ustart
         fg.out_on()
         for i, u in enumerate(U):
-            fg.set_ampl(u)
+            fg.ampl = u
             Tremain = Tgrow*60-i*Trez
             update_disp(fg, stage, u, Fmain, Tremain)
             sleep(Trez)
@@ -261,7 +262,7 @@ def grow_3stages():
         StepFdetach = (Fdetach-Fmain)/Ndetach
         F = [Fmain+i*StepFdetach for i in range(Ndetach+1)]
         for i, f in enumerate(F):
-            fg.set_freq(f)
+            fg.freq = f
             Tremain = Tdetach*60-i*Trez
             update_disp(fg, stage, Uend, f, Tremain)
             sleep(Trez)
@@ -275,7 +276,7 @@ def grow_3stages():
     while True:
         try:
             sleep(Trez)
-            T = time()- start
+            T = time() - start
             update_disp(fg, stage, None, None, T)
         except KeyboardInterrupt:
             break
