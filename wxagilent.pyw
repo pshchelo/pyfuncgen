@@ -14,7 +14,7 @@ import wx
 import wx.grid
 from pyfuncgen import FuncGenFrame
 import pyagilent
-from appinfo import icon as ICON
+from iconlib import vippiicon
 
 PROTOCOLCOLS = [
                 ('Stage', str),
@@ -30,12 +30,14 @@ class AgilentFrame(FuncGenFrame):
     """GUI to control Agilent Function Generator"""
     def __init__(self, *args, **kwargs):
         FuncGenFrame.__init__(self, *args, **kwargs)
+        self.SetTitle('wxAgilent')
         self.init_device_choice()
         self.init_grid()
         self.SetSize((690,390))
         self.basetitle = self.GetTitle()
         ib = wx.IconBundle()
-        ib.AddIconFromFile('Vippi.ico', wx.BITMAP_TYPE_ICO)
+        for item in vippiicon.catalog.values():
+            ib.AddIcon(item.GetIcon())
         self.SetIcons(ib)
         
         self.timer = wx.Timer(self, -1)
@@ -393,7 +395,7 @@ class AgilentFrame(FuncGenFrame):
                 break
         
 if __name__ == "__main__":
-    agilentApp = wx.PySimpleApp(False)
+    agilentApp = wx.PySimpleApp(True)
     frame = AgilentFrame(None, -1)
     frame.Show()
     agilentApp.MainLoop()

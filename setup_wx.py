@@ -52,11 +52,10 @@ setup(
     windows =[
         {
         'script':'wxagilent.pyw',
-        'icon_resources': [(1, "Vippi.ico")],
+        'icon_resources': [(1, "iconlib/vippi.ico")],
         'other_resources': [( 24, 1, manifest)],
         }
     ],
-    data_files = ['Vippi.ico'],
     zipfile = None,
     options = {'py2exe':{
         "bundle_files":1,
