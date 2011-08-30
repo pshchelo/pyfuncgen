@@ -136,7 +136,7 @@ class AgilentFrame(FuncGenFrame):
 
     def output_on(self):
         try:
-            self.fg.out_on()
+            self.fg.output = True
         except:
             return False
         else:
@@ -146,7 +146,7 @@ class AgilentFrame(FuncGenFrame):
         
     def output_off(self):
         try:
-            self.fg.out_off()
+            self.fg.output = False
         except:
             return False
         else:

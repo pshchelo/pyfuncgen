@@ -12,7 +12,6 @@ from sys import stdout, exit
 import argparse
 from time import time, sleep
 
-#TODO: make clear choices when excluding particular stages
 #TODO: put agilent object in separate module
 #TODO: make a base class (meta-?) with general pyVISA stuff and derive Agilent
 #      class from it, implementing the specific commands
@@ -104,17 +103,11 @@ class AgilentFuncGen(object):
     def close(self):
         self.dev.close()
     
-    def out_off(self):
-        self.dev.write("OUTP OFF")
-
-    def out_on(self):
-        self.dev.write("OUTP ON")
-    
     def _set_output(self, value):
         if value:
-            self.out_on()
+            self.dev.write("OUTP ON")
         else:
-            self.out_off()
+            self.dev.write("OUTP OFF")
     def _get_output(self):
         return bool(self.dev.ask("OUTP?"))
     output = property(_get_output, _set_output, None, "State of the device output")
@@ -235,17 +228,18 @@ def grow_3stages():
         Ngrow = Tgrow*60//Trez
         StepUgrow = (Uend-Ustart)/Ngrow
         U = [Ustart+i*StepUgrow for i in range(Ngrow+1)]
-        fg.freq = Fmain
-        fg.ampl = Ustart
-        fg.out_on()
+        fg.apply(Fmain, Ustart)
+        fg.output = True
         for i, u in enumerate(U):
-            fg.ampl = u
+            fg.apply(Fmain, u)
             Tremain = Tgrow*60-i*Trez
             update_disp(fg, stage, u, Fmain, Tremain)
             sleep(Trez)
     
     #resting stage
     if Trest:
+        fg.apply(Fmain, Uend)
+        fg.output = True
         stage = 'Resting'
         print '\n'+stage
         Nrest = Trest*60//Trez
@@ -256,6 +250,8 @@ def grow_3stages():
         
     #detachment stage
     if Tdetach:
+        fg.apply(Fmain, Uend)
+        fg.output = True
         stage = 'Detaching'
         print '\n'+stage
         Ndetach = Tdetach*60//Trez
