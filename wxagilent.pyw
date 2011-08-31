@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#TODO: add app icons from base64-encoded ones
 #TODO: auto layout and fit instead of setting the frame size by hand
 #TODO: think of something more elegant (generators? threads?) than list inflating
 #TODO:? add scripting so that any command can be sent to the device with pyVISA interface of write or ask
@@ -12,13 +11,16 @@ from math import sqrt
 
 import wx
 import wx.grid
-from pyfuncgen import FuncGenFrame
-import pyagilent
-from iconlib import vippiicon
+
+from funcgengui import FuncGenFrame
+import vippiicon
+
+from agilentfuncgen import AgilentFuncGen
+from funcgen import get_devices
 
 PROTOCOLCOLS = [
                 ('Stage', str),
-                ('t, min', int), 
+                ('t, min', float), 
                 ('start U, Vpp', float), 
                 ('start F, Hz', float), 
                 ('end U, Vpp', float), 
@@ -57,7 +59,7 @@ class AgilentFrame(FuncGenFrame):
         
     def init_device_choice(self):
         """Init device choise combo box"""
-        self.deviceChoice.SetItems(pyagilent.get_devices())
+        self.deviceChoice.SetItems(get_devices())
         self.deviceChoice.SetSelection(0)
         
     def init_grid(self):
@@ -88,7 +90,7 @@ class AgilentFrame(FuncGenFrame):
 
     def connect(self):
         devname = self.deviceChoice.GetStringSelection()
-        self.fg = pyagilent.AgilentFuncGen(devname)
+        self.fg = AgilentFuncGen(devname)
         if self.fg.dev:
             self.fg.connect()
             if not self.connectBtn.GetValue():
@@ -285,6 +287,7 @@ class AgilentFrame(FuncGenFrame):
         try:
             stage, u, f, Tremain, dT = self.protocol.next()
         except StopIteration:
+            self.update_display('Finished!')            
             self.finish()
         else:
             self.fg.apply(f, u)

@@ -3,12 +3,12 @@ import py2exe
 from appinfo import about
 about['name'] += ' console'
 setup(
-    console=['pyagilent.py'],
-    data_files = ["pyagilent.bat",],
+    console=['agilentgrow.py'],
+    data_files = ["agilentgrow.bat",],
     zipfile = None,
     options={"py2exe":{
         "bundle_files":1,
-        "dist_dir":'pyagilent'
+        "dist_dir":'agilentgrow'
             }
         },
     **about)
