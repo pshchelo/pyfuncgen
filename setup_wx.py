@@ -52,7 +52,7 @@ setup(
     windows =[
         {
         'script':'wxagilent.pyw',
-        'icon_resources': [(1, "iconlib/vippi.ico")],
+        'icon_resources': [(1, "vippi.ico")],
         'other_resources': [( 24, 1, manifest)],
         }
     ],

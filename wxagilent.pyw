@@ -113,6 +113,7 @@ class AgilentFrame(FuncGenFrame):
     def disconnect(self):
         self.fg.disconnect()
         self.fg.close()
+        self.fg = None
         self.connectBtn.SetValue(False)
         self.connectBtn.SetLabel('connect')
         self.SetTitle(self.basetitle)
@@ -287,8 +288,8 @@ class AgilentFrame(FuncGenFrame):
         try:
             stage, u, f, Tremain, dT = self.protocol.next()
         except StopIteration:
-            self.update_display('Finished!')            
             self.finish()
+            self.update_display('manual')
         else:
             self.fg.apply(f, u)
             self.timer.Start(dT*1000) 
@@ -299,7 +300,6 @@ class AgilentFrame(FuncGenFrame):
         self.timer.Stop()
         if not self.leaveOutFinishCb.GetValue():
             self.output_off()
-        self.fg.clear_display()
         wx.MessageBox('Finished', 'Info')
         for item in self.inactivewhenrun:
             item.Enable(True)
