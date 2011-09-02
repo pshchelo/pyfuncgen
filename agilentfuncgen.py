@@ -1,5 +1,6 @@
 """Abstracts the Agilent Function Generator A, pyVISA-based
 
+Warning: voltage/offset range is set as for 50 Ohm output load!
 """
 from funcgen import instrument, FuncGen
 
@@ -10,9 +11,11 @@ class AgilentFuncGen(FuncGen):
         self.freqrange = (1.0e-6, 2.0e7)
         self.minampl = 1.e-2 #for 50 Ohm output
         self.maxout = 5 # for 50 Ohm output
-        self.freqacc = "%.6f"
-        self.amplacc = "%.4f"
-        self.offsetacc = '%.4f'
+        self.freqdigits = 6
+        self.freqacc = "%%.%if"%self.freqdigits
+        self.ampldigits = 4
+        self.amplacc = "%%.%if"%self.ampldigits
+        self.offsetacc = "%%.%if"%self.ampldigits
             
     def _get_modes(self):
         return ['SIN','SQU','RAMP','DC','NOIS','PULS','USER']

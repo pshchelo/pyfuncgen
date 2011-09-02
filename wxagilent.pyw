@@ -97,6 +97,10 @@ class AgilentFrame(FuncGenFrame):
             if not self.connectBtn.GetValue():
                 self.connectBtn.SetValue(True)
             self.connectBtn.SetLabel('disconnect')
+            self.amplCtrl.SetDigits(self.fg.ampldigits)
+            self.amplCtrl.SetRange(self.fg.minampl, 2*self.fg.maxout)
+            self.freqCtrl.SetDigits(self.fg.freqdigits)
+            self.freqCtrl.SetRange(*self.fg.freqrange)
             u = self.fg.ampl
             f = self.fg.freq
             self.amplCtrl.SetValue(u)
