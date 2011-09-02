@@ -22,6 +22,7 @@ except (ImportError, AttributeError):
             self.name = name
             self.u = 0.1
             self.f = 10000.0
+            self.offset = 0
         def write(self, s):
             print '%s - %s'%(self.name, s)
             cmd_words = s.split()
@@ -36,6 +37,8 @@ except (ImportError, AttributeError):
                 self.f = float(params[0])
                 if len(params) > 1:
                     self.u = float(params[1])
+                    if len(params) == 3:
+                        self.offset=params[2]
         def close(self):
             del self
         def ask(self, cmd):
@@ -45,6 +48,8 @@ except (ImportError, AttributeError):
                 return self.f
             elif cmd_words[0] == 'VOLT?':
                 return self.u
+            elif cmd_words[0] == 'VOLT:OFF?':
+                return self.offset
             elif cmd_words[0] == '*IDN?':
                 return self.name
     

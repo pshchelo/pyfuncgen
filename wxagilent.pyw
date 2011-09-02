@@ -3,7 +3,8 @@
 
 #TODO: auto layout and fit instead of setting the frame size by hand
 #TODO: think of something more elegant (generators? threads?) than list inflating
-#TODO:? add scripting so that any command can be sent to the device with pyVISA interface of write or ask
+#TODO:? add scripting so that any command can be sent to the device 
+#       with pyVISA interface of write or ask
 
 from __future__ import division
 import csv
@@ -249,7 +250,7 @@ class AgilentFrame(FuncGenFrame):
         stage0, u0, f0, Tremain0, dT0 = out[0]
         self.fg.apply(f0, u0)
         self.output_on()
-        self.update_display(stage0, Tremain0)
+        self.update_display(stage0, Tremain0, dT0)
         self.timer.Start(dT0*1000)
         
         evt.Skip()
@@ -293,7 +294,7 @@ class AgilentFrame(FuncGenFrame):
         else:
             self.fg.apply(f, u)
             self.timer.Start(dT*1000) 
-            self.update_display(stage, Tremain)
+            self.update_display(stage, Tremain, dT)
     
     def finish(self):
         """Finishes the execution of the protocol"""
@@ -306,7 +307,7 @@ class AgilentFrame(FuncGenFrame):
         for item in self.activewhenrun:
             item.Enable(False)
         
-    def update_display(self, mesg, t=None):
+    def update_display(self, mesg, t=None, dt=None):
         """Updates display of function generator"""
         f = self.fg.freq
         u = self.fg.ampl
@@ -322,11 +323,16 @@ class AgilentFrame(FuncGenFrame):
             T = '%i:%02i'%(t//60, t%60)
         else:
             T = '--'
+        if dt:
+            DT = '%.3f'%dt
+        else:
+            DT = '--'
         line1 = "%s - %s"%(mesg, T)
         line2 = '%s Vpp | %s Hz'%(U,F)
         self.fg.set_display(line1, line2)
         self.stageDisplay.SetLabel(mesg)
         self.timeDisplay.SetLabel(T)
+        self.intervalDisplay.SetLabel(DT)
         self.amplCtrl.SetValue(u)
         self.freqCtrl.SetValue(f)
         self.amplVrmsDisplay.SetLabel('%.2f Vrms'%(u/sqrt(2)))
