@@ -106,6 +106,12 @@ class AgilentFrame(FuncGenFrame):
             self.amplCtrl.SetValue(u)
             self.freqCtrl.SetValue(f)
             self.update_display('manual')
+            if self.fg.output:
+                self.toggleOutputBtn.SetValue(True)
+                self.toggleOutputBtn.SetLabel("Output OFF")
+            else:
+                self.toggleOutputBtn.SetValue(False)
+                self.toggleOutputBtn.SetLabel("Output ON")
             title = self.GetTitle()
             self.SetTitle('%s - %s'%(self.basetitle, self.fg.whoami))
             return True
@@ -137,9 +143,11 @@ class AgilentFrame(FuncGenFrame):
         evt.Skip()
         if self.toggleOutputBtn.GetValue():
             if not self.output_on():
+                self.toggleOutputBtn.SetValue(False)
                 self.OnError("Could not turn output on.\nCheck device state.")
         else:
             if not self.output_off():
+                self.toggleOutputBtn.SetValue(True)
                 self.OnError("Could not turn output off.\nCheck device state.")
 
     def output_on(self):

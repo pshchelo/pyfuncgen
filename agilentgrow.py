@@ -131,7 +131,7 @@ def grow_3stages():
     #after-counter
     stage = 'Finished'
     print '\n'+stage
-    fg.out_off()
+    fg.output = False
     print "Hit Ctrl-C to stop"
     start = time()
     while True:

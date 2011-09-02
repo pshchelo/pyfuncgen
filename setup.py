@@ -49,17 +49,19 @@ manifest = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 """%{'prog':about['name']}
 
 setup(    
-    windows =[
+    windows = [
         {
         'script':'wxagilent.pyw',
-        'icon_resources': [(1, "vippi.ico")],
+        'icon_resources': [(1, "res/vippi.ico")],
         'other_resources': [( 24, 1, manifest)],
         }
     ],
-    zipfile = None,
+    console = ['agilentgrow.py'],
+    data_files = ["scripts/agilentgrow.bat",
+                            ('docs',['docs/LICENSE.txt','docs/MANUAL.txt','docs/README.txt'])],
     options = {'py2exe':{
-        "bundle_files":1,
-        "dist_dir":'wxagilent'
+        'bundle_files':1,
+        'dll_excludes':['w9xpopen.exe']
         },
                     },
     **about)

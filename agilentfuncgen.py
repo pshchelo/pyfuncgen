@@ -33,7 +33,7 @@ class AgilentFuncGen(FuncGen):
         else:
             self.dev.write("OUTP OFF")
     def _get_output(self):
-        return bool(self.dev.ask("OUTP?"))
+        return int(self.dev.ask("OUTP?"))
     output = property(_get_output, _set_output, None, "State of the device output")
     
     def _clip_freq(self, f):
@@ -82,9 +82,9 @@ class AgilentFuncGen(FuncGen):
     def _set_offset(self, offset):
         offset = self._clip_offset(offset)
         offsetstr = self.offsetacc%offset
-        self.dev.write("VOLT:OFF %s"%offsetstr)
+        self.dev.write("VOLT:OFFS %s"%offsetstr)
     def _get_offset(self):
-        return float(self.dev.ask("VOLT:OFF?"))
+        return float(self.dev.ask("VOLT:OFFS?"))
     offset = property(_get_offset, _set_offset, None, "Field DC Offset")
     
     def apply(self, f, u=None, offset=None, mode='SIN'):

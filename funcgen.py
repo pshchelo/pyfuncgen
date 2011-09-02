@@ -48,7 +48,7 @@ except (ImportError, AttributeError):
                 return self.f
             elif cmd_words[0] == 'VOLT?':
                 return self.u
-            elif cmd_words[0] == 'VOLT:OFF?':
+            elif cmd_words[0] == 'VOLT:OFFS?':
                 return self.offset
             elif cmd_words[0] == '*IDN?':
                 return self.name
@@ -67,8 +67,7 @@ else:
         try:
             devlist = get_instruments_list()
         except VisaIOError:
-            #TODO: why not empty list?
-            devlist = ['no devices']
+            devlist = []
         return devlist
 
 class FuncGen(object):
@@ -122,6 +121,12 @@ class FuncGen(object):
     def _get_ampl(self):
         print "Must be implemented in subclass"
     ampl = property(_get_ampl, _set_ampl, None, "Field amplitude")
+    
+    def _set_offset(self, u):
+        print "Must be implemented in subclass"
+    def _get_offset(self):
+        print "Must be implemented in subclass"
+    offset = property(_get_offset, _set_offset, None, "Field DC offset")
     
     def clear_display(self):
         print "Must be implemented in subclass"
