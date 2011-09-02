@@ -12,7 +12,7 @@ except (ImportError, AttributeError):
     # Dummy substitutes for developing/debugging 
     # on platforms without pyVISA / VISA implementation
     def get_devices():
-        return ['dev1', 'dev2']
+        return ['test device 1', 'test device 2']
 
     def instrument(name):
         return DummyDevice(name)
