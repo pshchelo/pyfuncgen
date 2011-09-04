@@ -96,7 +96,7 @@ class AgilentFrame(FuncGenFrame):
             self.fg.connect()
             if not self.connectBtn.GetValue():
                 self.connectBtn.SetValue(True)
-            self.connectBtn.SetLabel('disconnect')
+            self.connectBtn.SetLabel('Disconnect')
             self.amplCtrl.SetDigits(self.fg.ampldigits)
             self.amplCtrl.SetRange(self.fg.minampl, 2*self.fg.maxout)
             self.freqCtrl.SetDigits(self.fg.freqdigits)
@@ -126,7 +126,7 @@ class AgilentFrame(FuncGenFrame):
         self.fg.close()
         self.fg = None
         self.connectBtn.SetValue(False)
-        self.connectBtn.SetLabel('connect')
+        self.connectBtn.SetLabel('Connect')
         self.SetTitle(self.basetitle)
     
     def OnApply(self, evt):

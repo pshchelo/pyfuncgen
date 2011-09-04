@@ -23,6 +23,7 @@ except (ImportError, AttributeError):
             self.u = 0.1
             self.f = 10000.0
             self.offset = 0
+            self.output = 0
         def write(self, s):
             print '%s - %s'%(self.name, s)
             cmd_words = s.split()
@@ -52,6 +53,8 @@ except (ImportError, AttributeError):
                 return self.offset
             elif cmd_words[0] == '*IDN?':
                 return self.name
+            elif cmd_words[0] == 'OUTP?':
+                return self.output
     
     class VisaIOError(Exception):
         pass

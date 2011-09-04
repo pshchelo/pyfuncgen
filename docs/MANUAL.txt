@@ -1,28 +1,71 @@
-===========================================
+.. this is a reStructuredText. Use Docutils to convert it to HTML/XML, LaTeX or ODT.
+
+================================================================
 pyFuncGen - Waveform function generator control made with pyVISA
-===========================================
-Targeted for Agilent Technologies 33220A function generator in the first place, but can be accomodated for any other function generator supporting VISA interface. For this you would simply write your class similar to AgilentFuncGen inheriting from FuncGen, overriding the methods and using neccesary actual textual commands to be sent to device.
+================================================================
+
+This software allows to remotely control the Agilent 33220A wavefrom function generator and run defined voltage/frequency protocols on it. It mainly targets electroformation of giant lipid unilamellar vesicles, but can also be used for GUV electrodeformation experiments.
 
 There are two programs available - wxagilent.exe (a preferred one, with graphical user interface) and agilentgrow.exe (a much simpler command-line version for older non-Unicode systems, like Windows 2000 and earlier)
 
+General Notes
+=============
+All values concerning field magnitude (peak-to-peak amplitude and offset) are automatically clipped to be in the supported interval of the output field. **This allowed interval is taken for the output resistance of 50 Ohm!**
+
 wxAgilent 
-======
+=========
 control the generator manually or execute automatic protocol
 
 What you can do with it
---------------------------
-connect to a chosen VISA device or disconnect from currently connected one
-set device's frequency and amplitude (no offset setting in GUI yet, although already supported by API)
-turn output on or off
-compose a protocol to be run on the function generator
-save a written protocol for further use or load an existing protocol
-run the protocol with possibility to pause or abort it's execution
+-----------------------
+
+- connect to a chosen VISA device or disconnect from currently connected one
+- set device's frequency and amplitude (no offset and waveform setting in GUI yet, although already supported by API). Waveform is set to be sine wave, with frequency and peak-to-peak amplitude as provided.
+- turn output on or off
+- compose a protocol to be run on the function generator
+- save a written protocol for further use or load an existing protocol
+- run the protocol with possibility to pause or abort it's execution
 
 Connecting to the device
----------------------------
-When you start the program it automatically scans your system for available devices and populates the devices dropdown list with found ones. If the list is empy, make sure that the device is connected and hit "refresh" button. If your device list is composed of 'test device 1' and 'test device 2', than you do not have a proper VISA implementation installed.
+------------------------
+When you start the program it automatically scans your system for available devices and populates the devices dropdown list with found ones. If the list is empty, make sure that the device is connected and hit "refresh" button. If your device list is composed of 'test device 1' and 'test device 2', than you do not have a proper VISA implementation installed.
 
-Press "connect" button to connect to the chosen device. 
+#. Press "Connect" button to connect to the chosen device. The button will stay pressed and the label will change to "Disconnect". The device will display "manual", dashes instead of time and amplitude and frequency set on the device prior to connection.
+#. When connected, depress "Disconnect" button to disconnect. This will also clear the display of function generator and switch it's output off, but will not change the configured values of frequency and amplitude.
 
 Manual Control
-----------------
+--------------
+#. Input desired values for frequency and peak-to-peak amplitude into controls and hit "Apply" button. The function generator will be configured with this values, it's display will show "manual"  as current protocol stage name, dashes instead of time and set values for frequency and field amplitude. The input values will be automatically clipped according to the device supported range **as for 50 Ohm output load**. The program will also display the amplitude in RMS units for convenience when comparing with multimeter readings.
+#. Press the "Output ON" button to turn the output of the function generator on. The button will stay pressed indicating that the output is currently on. To turn output off, depress the button.
+#. You can change the values as you please, just do not forget to hit "Apply" button to make them active.
+
+Executing the protocol
+----------------------
+Protocol consists of stages, one line per stage. In each stage the field amplitude and frequence vary linearly from start to end values within a set amount of time. The properties you can set for stage are:
+- stage name - this will be displayed on the device's screen and in the program.
+- duration of a stage - number of minutes the stage must be completed within.
+- start amplitude and frequency - values to begin the stage with.
+- end amplitude and frequence - values to finish the stage with.
+- number of steps - total number of steps to perform the stage with, including start and end values.
+The number of steps affects how smoothly will your parameters vary, and how frequently will the display of the parameters be updated. 5 seconds interval is a nice setiing to begin with (number of steps = time in minutes * 12).
+#. Create the protocol - either type it yourself in the protocol grid or load it with the "Load" button. When ready editing/creating you can save the protocol for later use as CSV file by pressing "Save" button.
+	- Protocol file format: simply coma-separated values, a default CSV export format of MS Excel.
+	- You can add lines to the bottom by pressing the "Add" button
+	- You can remove empty lines from the bottom by pressing "Delete" button.
+#. When ready, press the "START" button. Most of the interface will be disabled then, and the protocol will comence.
+	- Device display and the program will show you the current amplitude and frequency, name of the current stage and time remaining until finishing it. Program will also show you currently active interval of values/displays update.
+	- You can press the "PAUSE" button to temporarily stop execution of the protocol. You can also decide whether to leave the output on or off while paused by checking/unchecking corresponding checkbox.
+	- You can abort execution altogether by pressing "STOP" button. You can also decide whether to leave the output on or off when aborted or finished normally by checking/unchecking corresponding checkbox.
+
+AgilentGrow
+===========
+This is a simple command-line version, allowing running protocols similar to the wxAgilent program, but with much less possibilities:
+- You can not save/load protocols.
+- The protocol is assumed to be in the following form:
+	#. Growing stage - the frequency is constant and the amplitude is changing lienarly from start to end values supplied.
+	#. Resting stage - frequency is the same as in the previous (growing) stage, amplitude is constant and equal to the end amplitude of the previous stage.
+	#. Detachment stage - amplitude is constant and equal to the one of the previous (resting) stage, and the frequency linearly changes from the value of previous stages to the end value.
+- You can however disable some stages by providing 0 as their duration.
+- Instead of number of steps you provide an update interval in seconds (default is 5 seconds). This affects how smoothly parameters vary.
+
+Run the program with the -h or --help switch to see all the available options.
