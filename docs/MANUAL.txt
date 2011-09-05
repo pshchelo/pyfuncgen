@@ -69,3 +69,5 @@ This is a simple command-line version, allowing running protocols similar to the
 - Instead of number of steps you provide an update interval in seconds (default is 5 seconds). This affects how smoothly parameters vary.
 
 Run the program with the -h or --help switch to see all the available options.
+
+There is also a helper script, agilentgrow.bat, that will run the program with the --help option and leave the command prompt runnning, so you can quickly start typing your command having reference of switches right in front of you.
