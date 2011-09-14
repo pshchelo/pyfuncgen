@@ -179,7 +179,7 @@ class AgilentFrame(FuncGenFrame):
         
     def OnSaveFile(self, evt):
         """Saving grid content as CSV."""
-        filedlg = wx.FileDialog(self, style=wx.FD_SAVE)
+        filedlg = wx.FileDialog(self, style=wx.FD_SAVE|wx.FD_CHANGE_DIR|wx.FD_OVERWRITE_PROMPT)
         if filedlg.ShowModal() != wx.ID_OK:
             filedlg.Destroy()
             return
@@ -192,7 +192,7 @@ class AgilentFrame(FuncGenFrame):
     def OnOpenFile(self, evt):
         """Load grid content from CSV."""
         evt.Skip()
-        filedlg = wx.FileDialog(self)
+        filedlg = wx.FileDialog(self, style = wx.FD_OPEN|wx.FD_CHANGE_DIR)
         if filedlg.ShowModal() != wx.ID_OK:
             filedlg.Destroy()
             return
