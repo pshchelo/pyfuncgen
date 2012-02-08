@@ -420,3 +420,4 @@ if __name__ == "__main__":
     frame = AgilentFrame(None, -1)
     frame.Show()
     agilentApp.MainLoop()
+

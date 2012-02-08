@@ -136,3 +136,4 @@ class FuncGen(object):
     
     def set_display(self, *lines):
         print "Must be implemented in subclass"
+

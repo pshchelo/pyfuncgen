@@ -110,3 +110,4 @@ class AgilentFuncGen(FuncGen):
         else:
             text = '\r'.join(lines)
         self.dev.write("DISP:TEXT '%s'"%text)
+

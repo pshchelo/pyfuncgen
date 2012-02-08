@@ -393,3 +393,4 @@ get_64Data = _64.GetData
 get_64Image = _64.GetImage
 get_64Bitmap = _64.GetBitmap
 get_64Icon = _64.GetIcon
+
