@@ -5,7 +5,27 @@
 #TODO: think of something more elegant (generators? threads?) than list inflating
 #TODO:? add scripting so that any command can be sent to the device 
 #       with pyVISA interface of write or ask
+"""wxPython application for controlling a function generator.
 
+    Needs two parameters - a class to instantiate a function generator representation,
+    and a function returning list of currently available/connected devices.
+    
+    The function generator object is expected to provide the following API:
+        dev - actual lower-level representation of the device, used to see if the device is connected
+        connect() - connect to the device
+        disconnect() - disconnect from the device
+        close() - close all connections to the device (possibly removing the device at all)
+        set_display(*lines) - set display of the device, possibly in multiple lines
+        clear_display() - clear the display of the device
+        ampl - set/read the current voltage amplitude
+        freq - set/get the current frequency
+        apply(freq, ampl) - set both amplitude and frequency at once
+        output - set/get the state of device's output (on or off)
+        whoami() - get some identification from the device
+        minampl, maxout, ampldigits - device's min/max/precision on voltage
+        freqrange, freqdigits - device's max/min/precision on frequency
+        mode - get/set current output mode of the device (waveform)
+"""
 from __future__ import division
 import csv
 from math import sqrt
@@ -15,9 +35,6 @@ import wx.grid
 
 from funcgengui import FuncGenFrame
 import vippiicon
-
-from agilentfuncgen import AgilentFuncGen
-from funcgen import get_devices
 
 PROTOCOLCOLS = [
                 ('Stage', str),
@@ -31,8 +48,12 @@ PROTOCOLCOLS = [
 
 class AgilentFrame(FuncGenFrame):
     """GUI to control Agilent Function Generator"""
-    def __init__(self, *args, **kwargs):
+    def __init__(self, devclass, devlist, *args, **kwargs):
         FuncGenFrame.__init__(self, *args, **kwargs)
+        self.fg = None
+        self.devclass = devclass
+        self.devlist = devlist
+        
         self.SetTitle('wxAgilent')
         self.init_device_choice()
         self.init_grid()
@@ -47,8 +68,6 @@ class AgilentFrame(FuncGenFrame):
         self.Bind(wx.EVT_TIMER, self.advance, self.timer)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         
-        self.fg = None
-        
         self.inactivewhenrun = [self.amplCtrl, self.freqCtrl, 
                                 self.protocolGrid, self.addRowBtn,
                                 self.cleanRowsBtn, self.openFileBtn,
@@ -60,7 +79,7 @@ class AgilentFrame(FuncGenFrame):
         
     def init_device_choice(self):
         """Init device choise combo box"""
-        self.deviceChoice.SetItems(get_devices())
+        self.deviceChoice.SetItems(self.devlist())
         self.deviceChoice.SetSelection(0)
         
     def init_grid(self):
@@ -86,13 +105,14 @@ class AgilentFrame(FuncGenFrame):
         evt.Skip()
         if self.connectBtn.GetValue():# button was pressed
             self.connect()
+            self.OnApply(evt)
         else: #button was depressed
             self.disconnect()
 
     def connect(self):
         devname = self.deviceChoice.GetStringSelection()
-        self.fg = AgilentFuncGen(devname)
-        if self.fg.dev:
+        self.fg = self.devclass(devname)
+        if bool(self.fg.dev):
             self.fg.connect()
             if not self.connectBtn.GetValue():
                 self.connectBtn.SetValue(True)
@@ -112,8 +132,8 @@ class AgilentFrame(FuncGenFrame):
             else:
                 self.toggleOutputBtn.SetValue(False)
                 self.toggleOutputBtn.SetLabel("Output ON")
-            title = self.GetTitle()
-            self.SetTitle('%s - %s'%(self.basetitle, self.fg.whoami))
+#            title = self.GetTitle()
+            self.SetTitle('%s - %s'%(self.basetitle, self.fg.whoami()))
             return True
         else:
             self.fg = None
@@ -347,7 +367,7 @@ class AgilentFrame(FuncGenFrame):
         self.intervalDisplay.SetLabel(DT)
         self.amplCtrl.SetValue(u)
         self.freqCtrl.SetValue(f)
-        self.amplVrmsDisplay.SetLabel('%.2f Vrms'%(u/sqrt(2)))
+        self.amplVrmsDisplay.SetLabel('%.2f Vrms'%(u/sqrt(2)/2))
         self.Layout()
         
     def get_grid_data(self):
@@ -416,8 +436,18 @@ class AgilentFrame(FuncGenFrame):
                 break
         
 if __name__ == "__main__":
-    agilentApp = wx.PySimpleApp(True)
-    frame = AgilentFrame(None, -1)
+    import sys
+#    if len(sys.argv) == 2:
+#        if sys.argv[1].lower() == 'visa':
+#            from agilentfuncgen import AgilentFuncGen as fgenclass
+#            from funcgen import get_devices as getdevlist
+#        elif sys.argv[1].lower() == 'serial':
+#            from ttifuncgen import TTIserial as fgenclass
+#            from ttifuncgen import list_serial as getdevlist
+    from ttifuncgen import TTIserial as fgenclass
+    from ttifuncgen import list_serial as getdevlist
+    agilentApp = wx.App(False)
+    frame = AgilentFrame(fgenclass, getdevlist, parent=None, id=-1)
     frame.Show()
     agilentApp.MainLoop()
 
