@@ -77,7 +77,7 @@ class FuncGen(object):
     """This is an abstraction of general pyVISA-based function generator.
     
     This meta-class defines the API, and most methods must be overriden 
-    in the subclass and provide specific VISA commands setted by manufacturer."""
+    in the subclass and provide specific VISA commands set by manufacturer."""
     def __init__(self, devname):
         try:
             self.dev = instrument(devname)
@@ -88,10 +88,12 @@ class FuncGen(object):
         print "Must be implemented in subclass"
     modes = property(_get_modes, None, None, "Supported output modes")
     
-    def _whoami(self):
-        """Pretty standard command, but might be overloaded in subclass"""
+    def whoami(self):
+        """Return internal device name
+        
+        Pretty standard command, but might be overloaded in subclass
+        """
         return self.dev.ask("*IDN?")
-    whoami = property(_whoami, None, None, 'Internal device name')
     
     def connect(self):
         print "Must be implemented in subclass"
@@ -104,7 +106,7 @@ class FuncGen(object):
         self.dev.write("*RST")
         
     def close(self):
-        """THis is provided by pyVISA, so it is there for granted."""
+        """This is provided by pyVISA, so it is there for granted."""
         self.dev.close()
     
     def _set_output(self, value):
