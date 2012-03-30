@@ -29,13 +29,14 @@ class TTIserial(object):
         self.port = port
         self.dev = None
         
-#TODO: check real params for TTI1230
-        #these are the specs of TTI1240
-        self.minampl = 0
-        self.maxout = 10
-        self.ampldigits = 3
-        self.freqdigits = 3
-        self.freqrange = (1.0e-6, 16e6)
+        #these are the specs of TTI1230
+        self.minampl = 5e-3
+        self.maxout = 20.0 # into 50 Ohm load
+        self.ampldigits = 4
+        self.freqdigits = 4 # worst case, for square, for others 7
+        self.freqrange = (1e-3, 10e6) # for sine-like
+#        self.freqrange = (1.0e-3, 15e6) # for square
+#        self.freqrange = (1.0e-3, 100e3) # for triangle, ramp and sin(x)/x        
 
         self.connect()
 
@@ -53,6 +54,7 @@ class TTIserial(object):
         self.freq = self.freqstate
         self.output = self.outputstate
         self.mode = self.modestate
+        self.write("zload open")
         
     def _get_modes(self):
         return ['SINE', 'SQUARE', 'TRIANG', 'DC', 
