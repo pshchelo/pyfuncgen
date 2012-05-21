@@ -1,6 +1,6 @@
 """Abstraction of general function generator, pyVISA-based.
 
-Provides meta-class, that must be subclassed.
+Provides a class to define the API, that must be subclassed.
 
 """
 
@@ -85,7 +85,7 @@ class FuncGen(object):
             self.dev = None
 
     def _get_modes(self):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     modes = property(_get_modes, None, None, "Supported output modes")
     
     def whoami(self):
@@ -96,10 +96,10 @@ class FuncGen(object):
         return self.dev.ask("*IDN?")
     
     def connect(self):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     
     def disconnect(self):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     
     def reset(self):
         """Pretty standard command, but might be overloaded in subclass"""
@@ -110,32 +110,31 @@ class FuncGen(object):
         self.dev.close()
     
     def _set_output(self, value):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     def _get_output(self):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     output = property(_get_output, _set_output, None, "State of the device output")
     
     def _set_freq(self, f):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     def _get_freq(self):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     freq = property(_get_freq, _set_freq, None, "Field frequency")
     
     def _set_ampl(self, u):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     def _get_ampl(self):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     ampl = property(_get_ampl, _set_ampl, None, "Field amplitude")
     
     def _set_offset(self, u):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     def _get_offset(self):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     offset = property(_get_offset, _set_offset, None, "Field DC offset")
     
     def clear_display(self):
-        print "Must be implemented in subclass"
+        raise NotImplementedError("Must be implemented in subclass")
     
     def set_display(self, *lines):
-        print "Must be implemented in subclass"
-
+        raise NotImplementedError("Must be implemented in subclass")
