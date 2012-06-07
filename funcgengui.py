@@ -74,8 +74,8 @@ class FuncGenFrame(wx.Frame):
         self.amplVrmsDisplay.SetFont(wx.Font(12, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
         self.pauseBtn.Enable(False)
         self.stopBtn.Enable(False)
-        self.leaveOutPauseCb.SetValue(1)
-        self.leaveOutFinishCb.SetValue(1)
+        self.leaveOutPauseCb.SetValue(0)
+        self.leaveOutFinishCb.SetValue(0)
         # end wxGlade
 
     def __do_layout(self):

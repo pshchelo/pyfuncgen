@@ -448,7 +448,7 @@
                                     <border>0</border>
                                     <option>1</option>
                                     <object class="wxCheckBox" name="leaveOutPauseCb" base="EditCheckBox">
-                                        <checked>1</checked>
+                                        <checked>0</checked>
                                         <label>Leave Output ON when paused</label>
                                     </object>
                                 </object>
@@ -456,7 +456,7 @@
                                     <border>0</border>
                                     <option>1</option>
                                     <object class="wxCheckBox" name="leaveOutFinishCb" base="EditCheckBox">
-                                        <checked>1</checked>
+                                        <checked>0</checked>
                                         <label>Leave Output ON when finished</label>
                                     </object>
                                 </object>

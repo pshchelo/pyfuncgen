@@ -54,7 +54,7 @@ class AgilentFrame(FuncGenFrame):
         self.devclass = devclass
         self.devlist = devlist
         
-        self.SetTitle('wxAgilent')
+        self.SetTitle('wxFuncGen')
         self.init_device_choice()
         self.init_grid()
         self.SetSize((690,390))
