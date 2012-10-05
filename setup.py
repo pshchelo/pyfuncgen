@@ -51,14 +51,14 @@ manifest = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 setup(    
     windows = [
         {
-        'script':'wxagilent.pyw',
-        'icon_resources': [(1, "res/vippi.ico")],
+        'script':'wxfuncgen.py',
+        'icon_resources': [(1, "res/Function_generator.png")],
         'other_resources': [( 24, 1, manifest)],
         }
     ],
     console = ['agilentgrow.py'],
     data_files = ["scripts/agilentgrow.bat",
-                            ('docs',['docs/LICENSE.txt','docs/MANUAL.txt','docs/README.txt'])],
+                            ('docs',['LICENSE.txt','docs/MANUAL.txt'])],
     options = {'py2exe':{
         'bundle_files':1,
         'dll_excludes':['w9xpopen.exe']
