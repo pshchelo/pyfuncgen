@@ -34,7 +34,6 @@ import wx
 import wx.grid
 
 from funcgengui import FuncGenFrame
-import vippiicon
 
 PROTOCOLCOLS = [
                 ('Stage', str),
@@ -59,10 +58,8 @@ class AgilentFrame(FuncGenFrame):
         self.init_grid()
         self.SetSize((690,390))
         self.basetitle = self.GetTitle()
-        ib = wx.IconBundle()
-        for item in vippiicon.catalog.values():
-            ib.AddIcon(item.GetIcon())
-        self.SetIcons(ib)
+        ib = wx.Icon('res/Function_generator.png')
+        self.SetIcon(ib)
         
         self.timer = wx.Timer(self, -1)
         self.Bind(wx.EVT_TIMER, self.advance, self.timer)
@@ -436,7 +433,7 @@ class AgilentFrame(FuncGenFrame):
                 break
         
 if __name__ == "__main__":
-    import sys
+#    import sys
 #    if len(sys.argv) == 2:
 #        if sys.argv[1].lower() == 'visa':
 #            from agilentfuncgen import AgilentFuncGen as fgenclass
