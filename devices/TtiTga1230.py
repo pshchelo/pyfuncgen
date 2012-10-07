@@ -4,19 +4,14 @@ Created on Thu Mar 29 12:01:38 2012
 
 @author: Pavlo Shchelokovskyy
 """
+
 import time
 import serial
-from serial.tools.list_ports import comports
 
-def list_serial():
-    """Return a list of available serial ports in the form suitable to pass to pyserial"""
-    seriallist = []
-    for item in comports():
-        seriallist.append(item[0])
-    return seriallist
-    
-class TTIserial(object):
-    """Represents a TTI1230 function generator
+from serialhelper import list_serial as get_devices
+
+class TtiTga1230(object):
+    """Represents a TTI TGA1230 function generator
 
     May as well work for other devices of the same manufacturer.   
     """
@@ -88,7 +83,7 @@ class TTIserial(object):
         """Internal device name"""
         if bool(self.dev):
             self.write("*IDN?")
-            #XXX: pause needed for device to form response
+            #pause needed for device to form response
             time.sleep(0.06)
             return self.read()
     

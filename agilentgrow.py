@@ -4,8 +4,9 @@ from sys import stdout, exit
 import argparse
 from time import time, sleep
 
-from agilentfuncgen import AgilentFuncGen
-from funcgen import get_devices
+from devices.Agilent33220A import get_devices
+from devices.Agilent33220A import Agilent33220A
+
 
 def update_disp(device, mesg, u, f, t):
     if u:
@@ -77,7 +78,7 @@ def grow_3stages():
     Trez = args.dt
     
     if args.device:
-        fg = AgilentFuncGen(args.device)
+        fg = Agilent33220A(args.device)
     else:
         print 'No device present.'
         exit(0)

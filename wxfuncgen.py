@@ -1,21 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-#TODO: auto layout and fit instead of setting the frame size by hand
-#TODO: think of something more elegant (generators? threads?) than list inflating
-#TODO:? add scripting so that any command can be sent to the device 
-#       with pyVISA interface of write or ask
 """wxPython application for controlling a function generator.
 
-    Needs two parameters - a class to instantiate a function generator representation,
-    and a function returning list of currently available/connected devices.
+    Needs two parameters - a class to instantiate 
+    a function generator representation, and a function returning list of 
+    currently available/connected devices.
     
     The function generator object is expected to provide the following API:
-        dev - actual lower-level representation of the device, used to see if the device is connected
+        dev - actual lower-level representation of the device, 
+            used to see if the device is connected
         connect() - connect to the device
         disconnect() - disconnect from the device
-        close() - close all connections to the device (possibly removing the device at all)
-        set_display(*lines) - set display of the device, possibly in multiple lines
+        close() - close all connections to the device 
+            (possibly removing the device at all)
+        set_display(*lines) - set display of the device, 
+            possibly in multiple lines
         clear_display() - clear the display of the device
         ampl - set/read the current voltage amplitude
         freq - set/get the current frequency
@@ -26,6 +25,7 @@
         freqrange, freqdigits - device's max/min/precision on frequency
         mode - get/set current output mode of the device (waveform)
 """
+
 from __future__ import division
 import csv
 from math import sqrt
@@ -56,6 +56,7 @@ class AgilentFrame(FuncGenFrame):
         self.SetTitle('wxFuncGen')
         self.init_device_choice()
         self.init_grid()
+        #FIXME: auto layout and fit instead of setting the frame size by hand
         self.SetSize((690,390))
         self.basetitle = self.GetTitle()
         ib = wx.Icon('res/Function_generator.png')
@@ -250,7 +251,6 @@ class AgilentFrame(FuncGenFrame):
             item.Enable(True)
         
         for row in data:
-            #TODO: devise smth smarter here (dict?)
             stage, T, Ustart, Fstart, Uend, Fend, Nstates = row
             if Nstates < 1:
                 self.OnError('Number of states is incorrect')
@@ -433,18 +433,24 @@ class AgilentFrame(FuncGenFrame):
                 break
         
 if __name__ == "__main__":
-#    import sys
-#    if len(sys.argv) == 2:
-#        if sys.argv[1].lower() == 'visa':
-#            from agilentfuncgen import AgilentFuncGen as fgenclass
-#            from funcgen import get_devices as getdevlist
-#        elif sys.argv[1].lower() == 'serial':
-#            from ttifuncgen import TTIserial as fgenclass
-#            from ttifuncgen import list_serial as getdevlist
-    from ttifuncgen import TTIserial as fgenclass
-    from ttifuncgen import list_serial as getdevlist
+    
+    from devices import implemented
     agilentApp = wx.App(False)
-    frame = AgilentFrame(fgenclass, getdevlist, parent=None, id=-1)
-    frame.Show()
-    agilentApp.MainLoop()
+    start_dlg = wx.SingleChoiceDialog(None,
+                                      message='Choose a Function Generator',
+                                      caption='Generator choice',
+                                      choices=implemented)
+    
+    if start_dlg.ShowModal() == wx.ID_OK:
+        device = start_dlg.GetStringSelection()
+        start_dlg.Destroy()
+
+        exec("from devices.%s import get_devices"%device)
+        exec("from devices.%s import %s as device"%(device, device))
+        
+        frame = AgilentFrame(device, get_devices, parent=None, id=-1)
+        frame.Show()
+        agilentApp.MainLoop()
+    else:
+        start_dlg.Destroy()
 

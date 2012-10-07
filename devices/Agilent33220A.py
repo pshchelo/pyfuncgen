@@ -1,13 +1,14 @@
-"""Abstracts the Agilent Function Generator A, pyVISA-based
+"""Abstracts the Agilent Function Generator 33220A, pyVISA-based
 
 Warning: voltage/offset range is set as for 50 Ohm output load!
 """
-from funcgen import instrument, FuncGen
+from funcgen import FuncGen
+from visahelper import get_devices
 
-class AgilentFuncGen(FuncGen):
+class Agilent33220A(FuncGen):
     """Represents an Agilent 33220A function generator"""
     def __init__(self, devname):
-        super(AgilentFuncGen, self).__init__(devname)
+        super(Agilent33220A, self).__init__(devname)
         self.freqrange = (1.0e-6, 2.0e7)
         self.minampl = 1.e-2 #for 50 Ohm output
         self.maxout = 5 # for 50 Ohm output
