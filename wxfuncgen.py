@@ -59,8 +59,9 @@ class AgilentFrame(FuncGenFrame):
         #FIXME: auto layout and fit instead of setting the frame size by hand
         self.SetSize((690,390))
         self.basetitle = self.GetTitle()
-        ib = wx.Icon('res/Function_generator.png')
-        self.SetIcon(ib)
+        ib = wx.IconBundleFromFile('res/Function_Generator.png', 
+                                   wx.BITMAP_TYPE_PNG)
+        self.SetIcons(ib)
         
         self.timer = wx.Timer(self, -1)
         self.Bind(wx.EVT_TIMER, self.advance, self.timer)
@@ -444,7 +445,7 @@ if __name__ == "__main__":
     if start_dlg.ShowModal() == wx.ID_OK:
         device = start_dlg.GetStringSelection()
         start_dlg.Destroy()
-
+        # somehow the imports must be in that particular order
         exec("from devices.%s import get_devices"%device)
         exec("from devices.%s import %s as device"%(device, device))
         

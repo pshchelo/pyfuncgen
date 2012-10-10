@@ -4,6 +4,7 @@ from sys import stdout, exit
 import argparse
 from time import time, sleep
 
+#somehow the import must be in that order
 from devices.Agilent33220A import get_devices
 from devices.Agilent33220A import Agilent33220A
 
