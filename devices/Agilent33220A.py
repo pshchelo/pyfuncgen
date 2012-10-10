@@ -2,13 +2,16 @@
 
 Warning: voltage/offset range is set as for 50 Ohm output load!
 """
-from funcgen import FuncGen
-from visahelper import get_devices
 
-class Agilent33220A(FuncGen):
+from visahelper import get_devices, instrument
+
+class Agilent33220A(object):
     """Represents an Agilent 33220A function generator"""
     def __init__(self, devname):
-        super(Agilent33220A, self).__init__(devname)
+        try:
+            self.dev = instrument(devname)
+        except:
+            self.dev = None
         self.freqrange = (1.0e-6, 2.0e7)
         self.minampl = 1.e-2 #for 50 Ohm output
         self.maxout = 5 # for 50 Ohm output

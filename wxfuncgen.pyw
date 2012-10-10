@@ -45,6 +45,26 @@ PROTOCOLCOLS = [
                 ('No of points', int),
                 ]
 
+FG_API = set(('clear_display', 
+              'dev',
+              'connect',
+              'disconnect',
+              'ampl',
+              'freq',
+              'ampldigits',
+              'freqdigits',
+              'minampl',
+              'maxampl',
+              'freqrange',
+              'output',
+              'whoami',
+              'close',
+              'apply',
+              'set_display',
+              'mode',
+              ))
+
+
 class AgilentFrame(FuncGenFrame):
     """GUI to control Agilent Function Generator"""
     def __init__(self, devclass, devlist, *args, **kwargs):
@@ -110,8 +130,8 @@ class AgilentFrame(FuncGenFrame):
 
     def connect(self):
         devname = self.deviceChoice.GetStringSelection()
-        self.fg = self.devclass(devname)
-        if bool(self.fg.dev):
+        self.fg = self.devclass(devname)        
+        if FG_API.issubset(set(dir(self.fg))) and bool(self.fg.dev):
             self.fg.connect()
             if not self.connectBtn.GetValue():
                 self.connectBtn.SetValue(True)
