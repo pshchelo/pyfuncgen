@@ -33,7 +33,7 @@ from math import sqrt
 import wx
 import wx.grid
 
-from funcgengui import FuncGenFrame
+from wxgui.funcgengui import FuncGenFrame
 
 PROTOCOLCOLS = [
                 ('Stage', str),
