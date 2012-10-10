@@ -21,7 +21,16 @@ class Agilent33220A(object):
         self.ampldigits = 4
         self.amplacc = "%%.%if"%self.ampldigits
         self.offsetacc = "%%.%if"%self.ampldigits
-            
+    
+    def whoami(self):
+        return self.dev.ask("*IDN?")
+        
+    def reset(self):
+        self.dev.write("*RST")
+        
+    def close(self):
+        self.dev.close()
+        
     def _get_modes(self):
         return ['SIN','SQU','RAMP','DC','NOIS','PULS','USER']
     modes = property(_get_modes, None, None, "Supported output modes")

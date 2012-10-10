@@ -44,6 +44,7 @@ PROTOCOLCOLS = [
                 ('No of points', int),
                 ]
 
+# these are implemented attributes methods needed currently
 FG_API = set(('clear_display', 
               'dev',
               'connect',
@@ -60,7 +61,6 @@ FG_API = set(('clear_display',
               'close',
               'apply',
               'set_display',
-              'mode',
               ))
 
 
