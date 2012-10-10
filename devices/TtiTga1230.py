@@ -26,7 +26,7 @@ class TtiTga1230(object):
         
         #these are the specs of TTI1230
         self.minampl = 5e-3
-        self.maxout = 20.0 # into 50 Ohm load
+        self.maxampl = 20.0 # into 50 Ohm load
         self.ampldigits = 4
         self.freqdigits = 4 # worst case, for square, for others 7
         self.freqrange = (1e-3, 10e6) # for sine-like
@@ -148,18 +148,18 @@ class TtiTga1230(object):
     def _clip_ampl(self, u):
         if u < self.minampl:
             return self.minampl
-        elif self.offset + u/2 > self.maxout:
-            return 2*(self.maxout - self.offset)
-        elif self.offset - u/2 < -self.maxout:
-            return 2*(self.maxout + self.offset)
+        elif self.offset + u/2 > self.maxampl:
+            return 2*(self.maxampl - self.offset)
+        elif self.offset - u/2 < -self.maxampl:
+            return 2*(self.maxampl + self.offset)
         else:
             return u
     
     def _clip_offset(self, offset):
-        if offset + self.ampl/2 > self.maxout:
-            return self.maxout - self.ampl/2
-        elif offset - self.ampl/2 < -self.maxout:
-            return self.ampl/2 - self.maxout
+        if offset + self.ampl/2 > self.maxampl:
+            return self.maxampl - self.ampl/2
+        elif offset - self.ampl/2 < -self.maxampl:
+            return self.ampl/2 - self.maxampl
         else:
             return offset
             

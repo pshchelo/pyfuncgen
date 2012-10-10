@@ -21,9 +21,8 @@
         apply(freq, ampl) - set both amplitude and frequency at once
         output - set/get the state of device's output (on or off)
         whoami() - get some identification from the device
-        minampl, maxout, ampldigits - device's min/max/precision on voltage
+        minampl, maxampl, ampldigits - device's min/max/precision on voltage
         freqrange, freqdigits - device's max/min/precision on frequency
-        mode - get/set current output mode of the device (waveform)
 """
 
 from __future__ import division
@@ -137,7 +136,7 @@ class AgilentFrame(FuncGenFrame):
                 self.connectBtn.SetValue(True)
             self.connectBtn.SetLabel('Disconnect')
             self.amplCtrl.SetDigits(self.fg.ampldigits)
-            self.amplCtrl.SetRange(self.fg.minampl, 2*self.fg.maxout)
+            self.amplCtrl.SetRange(self.fg.minampl, 2*self.fg.maxampl)
             self.freqCtrl.SetDigits(self.fg.freqdigits)
             self.freqCtrl.SetRange(*self.fg.freqrange)
             u = self.fg.ampl

@@ -1,6 +1,7 @@
 """Abstracts the Agilent Function Generator 33220A, pyVISA-based
 
 Warning: voltage/offset range is set as for 50 Ohm output load!
+
 """
 
 from visahelper import get_devices, instrument
@@ -14,7 +15,7 @@ class Agilent33220A(object):
             self.dev = None
         self.freqrange = (1.0e-6, 2.0e7)
         self.minampl = 1.e-2 #for 50 Ohm output
-        self.maxout = 5 # for 50 Ohm output
+        self.maxampl = 5 # for 50 Ohm output
         self.freqdigits = 6
         self.freqacc = "%%.%if"%self.freqdigits
         self.ampldigits = 4
@@ -52,18 +53,18 @@ class Agilent33220A(object):
     def _clip_ampl(self, u):
         if u < self.minampl:
             return self.minampl
-        elif self.offset + u/2 > self.maxout:
-            return 2*(self.maxout - self.offset)
-        elif self.offset - u/2 < -self.maxout:
-            return 2*(self.maxout + self.offset)
+        elif self.offset + u/2 > self.maxampl:
+            return 2*(self.maxampl - self.offset)
+        elif self.offset - u/2 < -self.maxampl:
+            return 2*(self.maxampl + self.offset)
         else:
             return u
     
     def _clip_offset(self, offset):
-        if offset + self.ampl/2 > self.maxout:
-            return self.maxout - self.ampl/2
-        elif offset - self.ampl/2 < -self.maxout:
-            return self.ampl/2 - self.maxout
+        if offset + self.ampl/2 > self.maxampl:
+            return self.maxampl - self.ampl/2
+        elif offset - self.ampl/2 < -self.maxampl:
+            return self.ampl/2 - self.maxampl
         else:
             return offset
         
