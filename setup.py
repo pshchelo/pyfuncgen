@@ -1,6 +1,15 @@
-from distutils.core import setup
-import py2exe
-from appinfo import about
+import sys
+from cx_Freeze import setup, Executable
+
+about = {
+    'name':'pyFuncGen',
+    'version':'0.5',
+    'description':'Function Generator Control',
+    'long_description':'Control (GUI) and Run automated protocols (GUI/CLI) on Function Generator',
+    'author':'Pavlo Shchelokovskyy',
+    'author_email':'shchelokovskyy@gmail.com',
+    'url':'http://sites.google.com/shchelokovskyy',
+}
 
 # this manifest enables the standard Windows XP/Vista-looking theme
 manifest = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -48,20 +57,12 @@ manifest = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </assembly>
 """%{'prog':about['name']}
 
-setup(    
-    windows = [
-        {
-        'script':'wxfuncgen.py',
-        'icon_resources': [(1, "res/Function_generator.png")],
-        'other_resources': [( 24, 1, manifest)],
-        }
-    ],
-    console = ['agilentgrow.py'],
-    data_files = ["scripts/agilentgrow.bat",
-                            ('docs',['LICENSE.txt','docs/MANUAL.txt'])],
-    options = {'py2exe':{
-        'bundle_files':1,
-        'dll_excludes':['w9xpopen.exe']
-        },
-                    },
-    **about)
+guibase = None
+if sys.platform == "win32":
+    guibase = "Win32GUI"
+
+guiexe = Executable("wxfuncgen.pyw", base=guibase, icon='res/Function_Generator.png' ) 
+    
+setup(options={"build_exe": {},},
+        executables=[guiexe],
+        **about)
