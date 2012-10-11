@@ -33,6 +33,7 @@ import wx
 import wx.grid
 
 from wxgui.funcgengui import FuncGenFrame
+from wxgui.wxres import getAppIcon
 
 PROTOCOLCOLS = [
                 ('Stage', str),
@@ -78,9 +79,7 @@ class AgilentFrame(FuncGenFrame):
         #FIXME: auto layout and fit instead of setting the frame size by hand
         self.SetSize((690,390))
         self.basetitle = self.GetTitle()
-        ib = wx.IconBundleFromFile('res/Function_Generator.png', 
-                                   wx.BITMAP_TYPE_PNG)
-        self.SetIcons(ib)
+        self.SetIcon(getAppIcon())
         
         self.timer = wx.Timer(self, -1)
         self.Bind(wx.EVT_TIMER, self.advance, self.timer)
