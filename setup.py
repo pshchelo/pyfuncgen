@@ -12,7 +12,7 @@ about = {'name':'pyFuncGen',
 includes = []
 excludes=[]
 packages = ["devices", "visa", "serial"]
-include_files = ['docs/LICENSE.txt', 'docs/MANUAL.txt']
+include_files = ['docs', ("scripts/agilentgrow.bat", "agilentgrow.bat")]
 
 gui_exe = Executable(script='wxfuncgen.pyw',
                      base='Win32GUI',
@@ -25,5 +25,5 @@ setup(options={"build_exe": {'includes':includes, 'excludes':excludes,
                              'include_files':include_files,
                              'compressed':True,
                              'append_script_to_exe':True}},
-	  executables=[gui_exe, cli_exe],
-	  **about)
+        executables=[gui_exe, cli_exe],
+        **about)
