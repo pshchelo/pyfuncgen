@@ -45,7 +45,8 @@ PROTOCOLCOLS = [
                 ('No of points', int),
                 ]
 
-# these are implemented attributes methods needed currently
+# these are attributes/methods of device class that are 
+# expected to be implemented
 FG_API = set(('clear_display', 
               'dev',
               'connect',
