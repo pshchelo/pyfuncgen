@@ -35,6 +35,11 @@ agilentgrow
     targeted specifically at Agilent 33220A, this is a much simpler 
     command-line version for older non-Unicode systems, like Windows 2000)
 
+Screenshots
+===========
+
+.. image:: wxFuncGen.png
+
 General Notes
 =============
 All values concerning field magnitude (peak-to-peak amplitude and offset) 
