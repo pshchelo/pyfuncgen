@@ -1,1 +1,0 @@
-start cmd /K agilentgrow.exe --help

@@ -12,11 +12,14 @@ about = {'name':'pyFuncGen',
 includes = []
 excludes=[]
 packages = ["devices", "visa", "serial"]
-include_files = ['docs', ("scripts/agilentgrow.bat", "agilentgrow.bat")]
+include_files = ['docs']
 
 gui_exe = Executable(script='wxfuncgen.pyw',
                      base='Win32GUI',
-                     icon='res\Function_Generator.ico')
+                     icon='res\Function_Generator.ico',
+                     shortcutName='wxFuncGen',
+                     shortcutDir="DesktopFolder",
+                     )
 
 cli_exe = Executable(script='agilentgrow.py')
 
