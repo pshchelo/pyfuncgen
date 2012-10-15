@@ -2,7 +2,7 @@
 """
 Created on Sat Oct 06 22:37:19 2012
 
-@author: family
+@author: Pavlo Shchelokovskyy
 """
 
 from serial.tools.list_ports import comports

@@ -2,8 +2,8 @@
 pyFuncGen
 =========
 
-Waveform function generator control made with pyVISA
-****************************************************
+Waveform function generator control
+***********************************
 
 .. this is a reStructuredText. Use Docutils to convert it to 
    HTML/XML, LaTeX or ODT, or rst2pdf for PDF output. 
@@ -35,12 +35,7 @@ agilentgrow
     targeted specifically at Agilent 33220A, this is a much simpler 
     command-line version for older non-Unicode systems, like Windows 2000)
 
-Screenshots
-===========
-
-.. image:: wxFuncGen.png
-
-General Notes
+General notes
 =============
 All values concerning field magnitude (peak-to-peak amplitude and offset) 
 are automatically clipped to be in the supported interval of the output field. 
@@ -53,12 +48,12 @@ Running from source
 -------------------
 
 - Python
-- pyVISA for communicating with devices through VISA interface
-    plus VISA interface drivers (e.g. from Agilent or National Instruments)
+- pyVISA for communicating with devices through VISA interface,
+  plus VISA interface drivers (e.g. from Agilent or National Instruments)
 - pySerial for communicating with devices through serial interface
 - wxPython for graphical interface to the program
 
-Running compiled standalone version
+Running compiled Windows version
 -----------------------------------
 
 - Windows XP or higher for GUI, Windows 2000 or higher for CLI. 
@@ -66,15 +61,22 @@ Running compiled standalone version
 - working VISA interface drivers (e.g. from Agilent or National Instruments)
   to communicate with devices through VISA interface
 
+.. raw:: pdf
 
-wxFuncGen 
+   PageBreak
+
+wxFuncGen
 =========
+
 ``wxfuncgen.pyw`` or ``wxfuncgen.exe``
-    control the generator manually or execute automatic protocol via graphical user 
-    interface.
+    control the generator manually or execute automatic protocol via 
+    graphical user interface.
+
+.. image:: wxFuncGen.png
 
 What you can do with it
 -----------------------
+
 - connect to a chosen VISA/Serial device or disconnect from currently connected 
   one
 - turn output on or off
@@ -82,21 +84,26 @@ What you can do with it
   yet, although already supported by API). Waveform is set to be sine wave, 
   with frequency and peak-to-peak amplitude as provided.
 - compose a protocol to be run on the function generator
-- save a written protocol for further use or load an existing protocol
-- run the protocol with possibility to pause or abort it's execution
+- save a composed protocol for further use or load an existing protocol
+- run the protocol with possibility to pause or abort its execution
 
 Connecting to the device
 ------------------------
-When you start the program it automatically scans your system for available 
-devices and populates the devices drop-down list with found ones. 
+When you start the program it first asks you to choose the device you will be 
+working with from the list of supported devices. 
+Then it automatically scans your system for ports that might connect to 
+your chosen device and populates the devices drop-down list with found ones. 
 If the list is empty, make sure that the device is connected and hit "refresh" 
-button. 
+button.
 If your device list is composed of 'test device 1' and 'test device 2', 
-than you do not have a proper VISA implementation installed.
+that means that you have chosen a VISA-based device but you do not have 
+a proper VISA implementation installed.
+
+.. TODO: check what values are set when connecting to the device
 
 #. Press "Connect" button to connect to the chosen device. 
    The button will stay pressed and the label will change to "Disconnect". 
-   The device will display "manual", dashes instead of time and amplitude and 
+   The device will display "manual", dashes instead of time, with amplitude and 
    frequency set on the device prior to connection.
 #. When connected, depress "Disconnect" button to disconnect. 
    This will also clear the display of function generator and switch 
@@ -128,12 +135,17 @@ In each stage the field amplitude and frequency vary linearly
 from start to end values within a set amount of time. 
 The properties you can set for stage are:
 
-- stage name - this will be displayed on the device's screen and in the program;
-- duration of a stage - number of minutes the stage must be completed within;
-- start amplitude and frequency - values to begin the stage with;
-- end amplitude and frequency - values to finish the stage with;
-- number of steps - total number of steps to perform the stage with, 
-  including start and end values.
+- stage name
+    this will be displayed on the device's screen and in the program;
+- duration of a stage
+    number of minutes the stage must be completed within;
+- start amplitude and frequency
+   values to begin the stage with;
+- end amplitude and frequency
+    values to finish the stage with;
+- number of steps
+    total number of steps to perform the stage with, 
+    including start and end values.
 
 The number of steps affects how smoothly will your parameters vary, 
 and how frequently will the display of the parameters be updated. 
@@ -145,7 +157,7 @@ and how frequently will the display of the parameters be updated.
    When ready editing/creating you can save the protocol for later use 
    as CSV file by pressing "Save" button.
 	
-   - Protocol file format: simply coma-separated values, 
+   - Protocol file format: coma-separated values, 
      a default CSV export format of MS Excel.
    - You can add lines to the bottom by pressing the "Add" button
    - You can remove empty lines from the bottom by pressing "Delete" button.
@@ -166,8 +178,10 @@ and how frequently will the display of the parameters be updated.
 
 AgilentGrow
 ===========
-This is a simple command-line version, hard-coded for 
-Agilent 33220A function generator.
+
+``agilentgrow.py`` or ``agilentgrow.exe``
+  simple command-line version, hard-coded for Agilent 33220A function generator.
+
 It allows you to run protocols similar to the wxFuncGen program, 
 but with much less possibilities:
 
@@ -187,12 +201,35 @@ but with much less possibilities:
   (default is 5 seconds). 
   This affects how smoothly parameters vary.
 
-Run the program with the -h or --help switch to see all the available options.
+Run the program with the -h or --help switch to see all the available options::
 
-There is also a helper script ``agilentgrow.bat``  that will run the program 
-with the --help option and leave the command prompt running, 
-so you can quickly start typing your command having reference of switches 
-right in front of you.
+    Usage: agilentgrow [-h] [-l] [-u1 U1] [-u2 U2] [-f1 F1] [-f2 F2] [-t1 T1]
+                          [-t2 T2] [-t3 T3] [-dt DT]
+                          [{test device 1,test device 2}]
+
+    Grow vesicles in 3 stages.
+
+    positional arguments:
+      {test device 1,test device 2}
+                            Device code to connect with (first found)
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -l, --list            List available devices and exit
+      -u1 U1                Initial voltage, Vpp (0.1)
+      -u2 U2                Final voltage, Vpp (2.5)
+      -f1 F1                Main frequency, Hz (500)
+      -f2 F2                Detachment frequency, Hz (50)
+      -t1 T1                Duration of growing stage, min (30)
+      -t2 T2                Duration of resting stage, min (60)
+      -t3 T3                Duration of detachment stage, min (30)
+      -dt DT                Update interval of values/displays, sec (5)
+
+    (Defaults) are for high salinity.
+
+.. raw:: pdf
+
+   PageBreak
 
 Supporting legacy systems
 =========================
