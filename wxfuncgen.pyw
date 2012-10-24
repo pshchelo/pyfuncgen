@@ -84,9 +84,13 @@ class AgilentFrame(FuncGenFrame):
         
         self.timer = wx.Timer(self, -1)
         self.Bind(wx.EVT_TIMER, self.advance, self.timer)
+        self.pulsetimer = wx.Timer(self, -1)
+        self.Bind(wx.EVT_TIMER, self.output_off, self.pulsetimer)
+        
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         
         self.inactivewhenrun = [self.amplCtrl, self.freqCtrl, 
+                                self.pulseCtrl, self.pulseBtn,
                                 self.protocolGrid, self.addRowBtn,
                                 self.cleanRowsBtn, self.openFileBtn,
                                 self.saveFileBtn, self.connectBtn,
@@ -187,7 +191,12 @@ class AgilentFrame(FuncGenFrame):
             if not self.output_off():
                 self.toggleOutputBtn.SetValue(True)
                 self.OnError("Could not turn output off.\nCheck device state.")
-
+    
+    def OnPulse(self, evt):
+        pulse = self.pulseCtrl.GetValue()
+        self.output_on()
+        self.pulsetimer.Start(pulse, True)
+        
     def output_on(self):
         try:
             self.fg.output = True
@@ -198,7 +207,7 @@ class AgilentFrame(FuncGenFrame):
             self.toggleOutputBtn.SetLabel('Output OFF')
             return True
         
-    def output_off(self):
+    def output_off(self, evt=None):
         try:
             self.fg.output = False
         except:
