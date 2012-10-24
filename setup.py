@@ -1,7 +1,7 @@
 from cx_Freeze import setup, Executable
 
 about = {'name':'pyFuncGen',
-		'version':'0.5',
+		'version':'0.2',
 		'description':'Function Generator Control',
 		'long_description':'Control (GUI) and Run automated protocols (GUI/CLI) on Function Generator',
 		'author':'Pavlo Shchelokovskyy',
