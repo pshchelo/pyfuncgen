@@ -83,6 +83,7 @@ What you can do with it
 - set device's frequency and amplitude (no offset and waveform setting in GUI 
   yet, although already supported by API). Waveform is set to be sine wave, 
   with frequency and peak-to-peak amplitude as provided.
+- apply the AC field as a pulse of set duration (from 1 to 1000 ms)
 - compose a protocol to be run on the function generator
 - save a composed protocol for further use or load an existing protocol
 - run the protocol with possibility to pause or abort its execution
@@ -127,6 +128,10 @@ Manual Control
    To turn output off, depress the button.
 #. You can change the values as you please, just do not forget to hit "Apply" 
    button to make them active.
+#. To apply an AC pulse, choose the desired duration of the pulse 
+   and press "PULSE!" button. The field with the parameters set as 
+   described above will be applied for this duration only, after which time 
+   the output will be switched off.
 
 Executing the protocol
 ----------------------
