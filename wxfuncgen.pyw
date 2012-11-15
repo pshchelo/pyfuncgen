@@ -89,6 +89,11 @@ class AgilentFrame(FuncGenFrame):
         
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         
+        pulseId = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnPulse, id=pulseId)
+        accel_tbl = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_F12, pulseId)])
+        self.SetAcceleratorTable(accel_tbl)
+        
         self.inactivewhenrun = [self.amplCtrl, self.freqCtrl, 
                                 self.pulseCtrl, self.pulseBtn,
                                 self.protocolGrid, self.addRowBtn,
