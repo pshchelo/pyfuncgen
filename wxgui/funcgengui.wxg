@@ -252,7 +252,7 @@
                                             <border>0</border>
                                             <option>0</option>
                                             <object class="wxButton" name="pulseBtn" base="EditButton">
-                                                <label>PULSE!</label>
+                                                <label>PULSE (F12)</label>
                                                 <events>
                                                     <handler event="EVT_BUTTON">OnPulse</handler>
                                                 </events>

@@ -31,7 +31,7 @@ class FuncGenFrame(wx.Frame):
         self.intervalDisplay = wx.StaticText(self.mainPnl, -1, "---")
         self.amplVrmsDisplay = wx.StaticText(self.mainPnl, -1, "--- Vrms")
         self.pulseCtrl = wx.SpinCtrl(self.mainPnl, -1, "500", min=0, max=1000, style=wx.SP_ARROW_KEYS | wx.TE_AUTO_URL)
-        self.pulseBtn = wx.Button(self.mainPnl, -1, "PULSE!")
+        self.pulseBtn = wx.Button(self.mainPnl, -1, "PULSE (F12)")
         self.ctrlBoxSzr_staticbox = wx.StaticBox(self.mainPnl, -1, "Manual Controls")
         self.protocolGrid = wx.grid.Grid(self.mainPnl, -1, size=(1, 1))
         self.addRowBtn = wx.Button(self.mainPnl, wx.ID_ADD, "")
